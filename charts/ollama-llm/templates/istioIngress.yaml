@@ -1,0 +1,19 @@
+{{- if and (.Values.openWebUI.enabled) (.Values.openWebUI.istioIngress.enabled) }}
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: open-web-ui-ingress 
+  namespace: istio-ingress
+spec:
+  hosts:
+    - "{{ .Values.openWebUI.istioIngress.domainPrefix }}.{{ .Values.openWebUI.istioIngress.domain }}"
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: "open-webui.{{ .Values.openWebUI.namespace }}.svc.cluster.local"
+            port:
+              number: 80
+{{- end }}

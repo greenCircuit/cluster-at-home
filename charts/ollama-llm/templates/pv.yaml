@@ -1,0 +1,26 @@
+{{- if .Values.persistence.localStorage.enabled }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: ollama-storage 
+  labels:
+    local: ollama-storage 
+spec:
+  capacity:
+    storage: {{ .Values.persistence.capacity }} 
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Delete 
+  storageClassName: local-storage
+  local:
+    path: {{ .Values.persistence.localStorage.path }} 
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: node-role.kubernetes.io/control-plane
+          operator: In
+          values:
+          - "true" 
+{{- end }}

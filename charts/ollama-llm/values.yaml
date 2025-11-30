@@ -1,0 +1,46 @@
+image:
+  repository: docker.io/ollama/ollama
+  tag: latest 
+  pullPolicy: Always
+
+# add resources in case run too big model and starve host from resources
+resources:
+  requests:
+    memory: "500Mi"
+    cpu: "10m"
+  limits:
+    memory: "2Gi"
+    cpu: "500m"
+
+securityContext: 
+  allowPrivilegeEscalation: false
+  privileged: false
+  runAsNonRoot: true
+  runAsUser: 1001          
+  runAsGroup: 1001         
+  capabilities:
+    drop:
+    - ALL
+
+# want to store models somewhere so when pod restarts  don't need to redownload
+persistence:
+  storageClass: local-storage
+  capacity: 50Gi
+  localStorage:
+    enabled: true
+    path: /media/lab/cluster-storage/volumes/ollama
+    
+# if want to install open-webui using flux helm release custom resources
+# need to have flux custom resources available on the cluster 
+openWebUI:
+  enabled: true
+  namespace: default         # name space where open webui will run
+  istioIngress:
+    enabled: true
+    gateway: "my-gateway"    # istio gateway that want to use
+    domain: "example.com"    # domain for istio you want to use, gateways should have this domain as well
+    domainPrefix: "ai"       # subdomain so can navigate using prefix.domain
+  values:
+    # Disable the bundled Ollama instance
+    ollama:
+      enabled: false

@@ -1,0 +1,16 @@
+# storage so when restart pod still going to have models that previously installed 
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ollama-pvc
+  namespace: services
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.persistence.capacity }} 
+  storageClassName: local-storage
+  selector:
+    matchLabels:
+        local: ollama-storage

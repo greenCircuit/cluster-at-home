@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: adguard-exporter
+  labels:
+    app.kubernetes.io/name: adguard-exporter
+    app: adguard-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: adguard-exporter
+  template:
+    metadata:
+      labels:
+        app: adguard-exporter
+        app.kubernetes.io/name: adguard-exporter
+    spec:      
+      automountServiceAccountToken: false
+      dnsPolicy: ClusterFirst
+      containers:
+        - name: adguard-exporter
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+          env:
+          {{- range $key, $value := .Values.env }}
+            - name: {{ $key }}
+              value: "{{ $value }}"
+          {{- end }}
+          {{- range .Values.secretEnv.vars }}
+            - name: {{ .env }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.secretEnv.secretName }}
+                  key: {{ .key }}
+          {{- end }}
+          {{- if .Values.resources }}
+          resources:
+            requests:
+              memory: {{ .Values.resources.requests.memory }}
+              cpu: {{ .Values.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.resources.limits.memory }}
+              cpu: {{ .Values.resources.limits.cpu }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: 9618
+              protocol: TCP
+{{- with .Values.securityContext }}
+          securityContext:
+{{ toYaml . | nindent 12 }}
+{{- end }}

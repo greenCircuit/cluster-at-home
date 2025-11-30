@@ -1,0 +1,21 @@
+{{- if .Values.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    {{ .Values.serviceMonitor.labels | toYaml }}
+  name: adguard-exporter
+  namespace: {{ .Values.serviceMonitor.namespace }}
+spec:
+  namespaceSelector:
+    matchNames:
+      - {{ .release.namespace }}
+  endpoints:
+  - name: http
+    path: /metrics
+    interval: {{ .Values.serviceMonitor.scrapeInterval }}
+  jobLabel: app.kubernetes.io/name
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: adguard-exporter 
+{{- end }}

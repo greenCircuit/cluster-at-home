@@ -1,0 +1,9 @@
+# Disable the bundled Ollama instance
+ollama:
+  enabled: false
+
+# Pass the connection URL as an environment variable
+# Syntax matches the official Open WebUI chart
+extraEnvVars:
+  - name: OLLAMA_BASE_URL
+    value: "http://ollama.services.svc.cluster.local"

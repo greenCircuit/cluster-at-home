@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: adguard-home-exporter
+  labels:
+    app.kubernetes.io/instance: adguard-exporter
+    app.kubernetes.io/name: adguard-exporter
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9618 
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    app.kubernetes.io/name: adguard-exporter
+---

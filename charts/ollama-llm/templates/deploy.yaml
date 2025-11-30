@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama
+  labels:
+    app.kubernetes.io/name: ollama
+    app: ollama
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ollama
+  template:
+    metadata:
+      labels:
+        app: ollama
+        app.kubernetes.io/name: ollama
+    spec:      
+      runtimeClassName: nvidia
+      automountServiceAccountToken: false
+      containers:
+        - name: ollama 
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+          resources:
+            requests:
+              memory: {{ .Values.resources.requests.memory }}
+              cpu: {{ .Values.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.resources.limits.memory }}
+              cpu: {{ .Values.resources.limits.cpu }}
+              nvidia.com/gpu: 1
+          ports:
+            - containerPort: 13434
+              protocol: TCP
+{{- with .Values.securityContext }}
+          securityContext:
+{{ toYaml . | nindent 12 }}
+{{- end }}
+      volumes:
+      - name: models
+        persistentVolumeClaim:
+          claimName: ollama-pvc

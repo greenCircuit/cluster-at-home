@@ -1,0 +1,101 @@
+# minimal k8s deployment to make ollama running inside cluster
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama
+  namespace: services
+  labels:
+    app: ollama 
+spec:
+  strategy:
+    type: Recreate  # free existing gpu and make in available for new pod
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ollama
+  template:
+    metadata:
+      labels:
+        app: ollama
+    spec:
+      runtimeClassName: nvidia
+      containers:
+      - name: ollama
+        image: docker.io/ollama/ollama:latest 
+        # livenessProbe:
+        #   initialDelaySeconds: 15
+        #   failureThreshold: 3
+        #   periodSeconds: 30
+        #   httpGet:
+        #     port: 11434
+        #     path: /api/tags
+        resources: 
+          limits:
+            # attach gpu using nvidia operator
+            # pod will go to pending state if other pod is also using same resouce, since each pod is requesting 1 gpu
+            # and gpu is already taken by other pod
+            nvidia.com/gpu: 1             
+        ports:
+        - containerPort: 11434 
+        volumeMounts:
+        - name: models
+          mountPath: /root/.ollama/models  # will store models inside volume so don't need to redownload them each time
+      volumes: 
+      - name: models
+        persistentVolumeClaim:
+          claimName: ollama-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama
+  namespace: services
+spec:
+  selector:
+    app: ollama
+  ports:
+    - protocol: TCP
+      port: 11434 
+      targetPort: 11434
+---
+# storage so when restart pod still going to have models that previously installed 
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ollama-pvc
+  namespace: services
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: local-storage
+  selector:
+    matchLabels:
+        local: ollama-storage
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: ollama-storage 
+  labels:
+    local: ollama-storage 
+spec:
+  capacity:
+    storage: 50Gi 
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Delete 
+  storageClassName: local-storage
+  local:
+    path: /media/lab/cluster-storage/volumes/ollama   # define your storage path
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: node-role.kubernetes.io/control-plane
+          operator: In
+          values:
+          - "true" 

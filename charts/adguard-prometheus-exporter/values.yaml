@@ -1,0 +1,44 @@
+image:
+  repository: ghcr.io/henrywhitaker3/adguard-exporter
+  tag: v1.2.1
+  pullPolicy: Always
+
+# all env vars that will be passed to the container
+env:
+  ADGUARD_SERVERS: "http://adguard-home.security.svc.cluster.local:3000"   # svc of adguard running inside k8s or ip
+  INTERVAL: "30s"
+
+# provide credential for adguard instance using k8s secrets
+secretEnv:
+  secretName: adguard-exporter  # secret that will provide vars username and passwords
+  vars:
+  - env: ADGUARD_PASSWORDS  # env var that will provide to pod
+    key: PASSWORDS   # key inside secret
+  - env: ADGUARD_USERNAMES
+    key: USERS
+
+resources:
+  requests:
+    memory: "10Mi"
+    cpu: "10m"
+  limits:
+    memory: "128Mi"
+    cpu: "25m"
+
+securityContext: 
+  allowPrivilegeEscalation: false
+  privileged: false
+  runAsNonRoot: true
+  runAsUser: 1001          
+  runAsGroup: 1001         
+  capabilities:
+    drop:
+    - ALL
+
+# make prometheus operator to scrape metrics using service monitor
+serviceMonitor:
+  namespace: monitoring       # ns from which prometheus operator can track service monitor CRs
+  enabled: true
+  labels:
+    release: operator_label   # label that prometheus operator looks to scrape metrics
+  scrapeInterval: 30s
