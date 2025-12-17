@@ -1,0 +1,21 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: gitlab-support
+  namespace: flux-system
+spec:
+  driftDetection:
+    mode: enabled
+  targetNamespace: gitlab
+  interval: 15m
+  chart:
+    spec:
+      chart: ./home-cluster/apps/gitlab-all-in-one/gitlab-support
+      reconcileStrategy: Revision
+      interval: 1m
+      sourceRef:
+        kind: GitRepository
+        name: flux-system 
+        namespace: flux-system
+  values: 
+    global: {{ .Values.global | toYaml | nindent 6 }}

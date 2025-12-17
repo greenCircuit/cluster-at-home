@@ -1,0 +1,107 @@
+{{- if .Values.gitlab.enabled }}
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: gitlab-hr 
+  namespace: flux-system
+spec:
+  upgrade:
+    remediation:
+      retries: 5
+  driftDetection:
+    mode: enabled
+    ignore:
+    - paths: ["/"]
+      target:
+        kind: Job
+  targetNamespace: gitlab
+  interval: 15m
+  chart:
+    spec:
+      chart: ./k3s/flux-cluster/capability_charts/gitlab-18.3.5
+      reconcileStrategy: Revision
+      interval: 1m
+      sourceRef:
+        kind: GitRepository
+        name: flux-system 
+        namespace: flux-system
+  valuesFrom:
+    - kind: ConfigMap
+      name: gitlab-base-vals
+      valuesKey: values.yaml
+  values: 
+    registry:
+      database:
+        migrations:
+          enabled: false
+    upgradeCheck:
+      enabled: false  # disable because can cause deadlock on helm upgrade if statefull sets are missing, accidently deleted
+    # doing global so can set up passwords
+    global:
+      hosts:
+        domain: dev.local
+      extraEnv:  # Will be applied to _all_ of `gitlab/*`
+        GITLAB_LOG_LEVEL: "INFO" # Values
+
+      gitlabVersion: "18.5.1"
+      railsSecret:
+        secrets:
+          name: 
+      redis:
+        auth:
+          enabled: true
+          secret: "my-redis-secret"
+          key: "password"
+      psql:
+        # CRITICAL FIX: Tell Postgres to create this specific user/db
+        username: "gitlab" 
+        database: "gitlabhq_production"
+        password:
+          useSecret: true
+          secret: "my-postgres-secret"
+          key: "password"
+      minio:
+        credentials:
+          secret: "my-minio-secret" # Must contain 'accesskey' and 'secretkey' keys
+      gitaly:
+        authToken:
+          secret: "my-gitaly-secret"
+          key: "token"
+      # GitLab Shell must share the same token to talk to Gitaly
+      shell:
+        authToken:
+          secret: "my-gitaly-secret"
+          key: "token"
+    # End of global, child  helm charts now
+    minio:
+      persistence:
+        storageClass: local-storage
+        matchLabels:
+          local: gitlab-minio
+    redis:
+      auth:
+        enabled: true
+        existingSecret: "my-redis-secret"
+        existingSecretPasswordKey: "password"
+      master:
+        persistence:
+          existingClaim: gitlab-redis-pvc
+    postgresql:
+      primary:
+        persistence:
+          existingClaim: gitlab-postgresql-pvc
+      auth:
+        # CRITICAL FIX: Tell Postgres to create this specific user/db
+        username: "gitlab" 
+        database: "gitlabhq_production"
+        existingSecret: "my-postgres-secret"
+        secretKeys:
+          userPasswordKey: "password"      # Password for the 'gitlab' user
+          adminPasswordKey: "postgres-password" # Password for the 'postgres' admin user
+    gitlab:
+      gitaly:
+        persistence:
+          storageClass: local-storage
+          matchLabels:
+            local: gitlab-gitaly
+{{- end }}

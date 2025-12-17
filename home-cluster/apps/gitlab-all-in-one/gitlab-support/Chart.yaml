@@ -1,0 +1,8 @@
+apiVersion: v2
+name: gitlab-support 
+description: Dependencies for gitlab helm chart
+
+type: application
+
+version: 0.1.0
+appVersion: "18.3.5"

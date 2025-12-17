@@ -1,0 +1,30 @@
+# minimal set of base values to turn off/on oly services that want
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gitlab-base-vals
+  namespace: flux-system 
+data:
+  values.yaml: | 
+    global:
+      edition: ce
+      gitlabVersion: "18.3.5"
+      hosts:
+        domain: dev.io
+        https: false   # need to have so can log in when using istio gateway otherwise get 502 error
+      time_zone: EST
+      ingress:
+        enabled: false
+    certmanager-issuer:
+      email: email@example.com
+    installCertmanager: true
+    certmanager:
+      installCRDs: false 
+    nginx-ingress: &nginx-ingress
+      enabled: false
+    prometheus:
+      install: false 
+    registry:
+      enabled: true 
+    gitlab-runner:
+      install: false 

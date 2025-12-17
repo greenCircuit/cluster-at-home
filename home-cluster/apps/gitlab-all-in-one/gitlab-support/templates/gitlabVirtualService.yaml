@@ -1,0 +1,59 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: gitlab-virtualservice
+  namespace: istio-ingress
+spec:
+  hosts:
+    - "gitlab.{{ .Values.global.domain.internal.url | default ".local" }}"  # Should match the Gateway's hosts
+  gateways:
+    - gateway-internal
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: gitlab-gitlab-hr-webservice-default.gitlab.svc.cluster.local  # Replace with your service name
+            port:
+              number: 8181
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: registry-virtualservice
+  namespace: istio-ingress
+spec:
+  hosts:
+    - "registry.{{ .Values.global.domain.internal.url | default ".local" }}"  # Should match the Gateway's hosts
+  gateways:
+    - gateway-internal
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: gitlab-gitlab-hr-registry.gitlab.svc.cluster.local  # Replace with your service name
+            port:
+              number: 5000
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: gitlab-virtualservice-tls
+  namespace: istio-ingress
+spec:
+  hosts:
+    - "gitlab.{{ .Values.global.domain.internalTls.url | default ".tls" }}"  # Should match the Gateway's hosts
+  gateways:
+    - gateway-tls
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: gitlab-gitlab-hr-webservice-default.gitlab.svc.cluster.local  # Replace with your service name
+            port:
+              number: 8181

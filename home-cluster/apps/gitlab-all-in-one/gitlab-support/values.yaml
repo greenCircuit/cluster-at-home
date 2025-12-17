@@ -1,0 +1,18 @@
+global:
+  storagePath: ""
+  istio:
+    enabled: true
+  domain:
+    internal: 
+      url: ""
+      gateway: ""
+    internalTls:
+      url: ""
+      gateway: ""
+    external: 
+      url: ""
+      gateway: ""
+
+letsEncrypt:
+  enabled: false
+
