@@ -1,0 +1,69 @@
+# Use this chart and try to deploy it as helm chart using fluxcd helm releaes
+# idea that each microservice is going to have its own fluxcd helm release manifests
+# will make namging/deploying multiple microservices easier, just need to modify values and microservice is ready
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: example 
+  namespace: flux-system
+spec:
+  driftDetection:
+    mode: enabled
+  targetNamespace: default
+  interval: 15m
+  chart:
+    spec:
+      chart: ./charts/microsevice-chart  # pointin to this path in gitrepo
+      reconcileStrategy: Revision
+      interval: 15m
+      sourceRef:
+        kind: GitRepository
+        name: home-cluster
+        namespace: flux-system
+  values: 
+    name: appname
+    replicaCount: 1
+    image:
+      repository: nginx
+      tag: latest
+      pullPolicy: Always
+    imagePullSecrets: []
+    env: 
+      DB_NAME: my-db
+      DB_HOST: postgress.default.svc.cluster.local:5430
+
+    # set env from multiple secrets 
+    secretEnv: 
+      - name: db-connect-secret
+        values:
+        - key: "DB_USER"
+          value: "DB_USER"
+        - key: "DB_PASS"
+          value: "DB_PASS"
+
+    resources: 
+      enabled: true
+      requests:
+        cpu: "128m"
+        memory: 128Mi
+      limits:
+        cpu: "512m"
+        memory: 512Mi
+
+    # Networking
+    ports: 
+      - port: 8000
+        name: http
+        protocol: TCP
+
+    service: 
+      - protocol: TCP
+        port: 8000
+        targetPort: 8000
+
+    # istio virtual service 
+    istioIngress:
+        enabled: true
+        gateway: my-gateway
+        port: 8000
+        hostSufix: "example.com"

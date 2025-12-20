@@ -1,0 +1,82 @@
+# Deployments
+name: appname
+replicaCount: 1
+
+image:
+  repository: nginx
+  tag: latest
+  pullPolicy: Always
+
+imagePullSecrets: []
+
+securityContext:
+    allowPrivilegeEscalation: false
+    privileged: false
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    runAsUser: 1000
+    capabilities:
+      drop:
+        - ALL
+
+# setting env 
+env: 
+  ENV: STAGING
+  user: admin
+
+# set env from multiple secrets 
+secretEnv: 
+  - name: my-secret  
+    values:
+    - key: "key-inside-secret"
+      value: "value-inside-container"
+
+# TODO0
+initContainer:
+  enable: false
+  img: busybox
+  cmd: "bin/bash chmod 755 -R /config"
+
+
+resources: 
+  enabled: false
+  requests:
+    cpu: "128m"
+    memory: 128Mi
+  limits:
+    cpu: "512m"
+    memory: 512Mi
+# 
+# 
+persistence:
+  enabled: false
+  # will create pv with local storage and pvc that label selector for it
+  local-storage:
+    hostPath: ""  
+    node-key: node-role.kubernetes.io/control-plane
+    volumes:
+      - name: ""  # name and labels for pv and pvc
+        path: ""  # path where storage is located
+        size: ""  # what size local pv and pvc should be
+
+# Networking
+ports: 
+  - port: 80
+    name: http
+    protocol: TCP
+
+# TODO: Attaching a config as a volume
+configData: {}
+
+
+service: 
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+
+# istio virtual service 
+istioIngress:
+    enabled: true
+    gateway: my-gateway
+    port: 80
+    hostSufix: "example.com"

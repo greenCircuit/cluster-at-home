@@ -1,0 +1,19 @@
+{{- if .Values.persistence.enabled }}
+{{- range .Values.persistence.local_storage.volumes }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .name }}-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .size }}
+  storageClassName: local-storage
+  selector:
+    matchLabels:
+      local: {{ .name }}
+{{- end }}
+{{- end }}

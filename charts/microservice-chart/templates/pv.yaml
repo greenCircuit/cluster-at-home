@@ -1,0 +1,27 @@
+{{- if .Values.persistence.enabled }}
+{{- range .Values.persistence.local_storage.volumes }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .name }}-pv
+  labels:
+    local: {{ .name }}
+spec:
+  capacity:
+    storage: {{ .size }}
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: {{ .path }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: {{ $.Values.persistence.local_storage.node_key }}
+          operator: In
+          values:
+          - "true"
+{{- end }}
+{{- end }}

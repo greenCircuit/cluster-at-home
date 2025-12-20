@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.name }} 
+  labels:
+    name: {{ .Values.name }} 
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      name: {{ .Values.name }} 
+  template:
+    metadata:
+      labels:
+        name: {{ .Values.name }} 
+    spec:
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range .Values.imagePullSecrets }}
+        - name: {{ . }}
+        {{- end }}
+      {{- end }}
+      containers:
+        - name: {{ .Values.name }} 
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+          {{- toYaml .Values.securityContext | nindent 12 }}          
+          {{- if .Values.resources }}
+          resources:
+            requests:
+              memory: {{ .Values.resources.requests.memory }}
+              cpu: {{ .Values.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.resources.limits.memory }}
+              cpu: {{ .Values.resources.limits.cpu }}
+          {{- end }}
+
+          ports:
+          {{- range .Values.ports }}
+            - name: {{ .name }}
+              containerPort: {{ .port }}
+              protocol: {{ .protocol }}
+          {{- end }}
+
+          {{- if or .Values.env .Values.secretEnv }}
+          env:
+            # env vars from chart 
+            {{- range $key, $value := .Values.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+            # env vars from sercers
+            {{- range .Values.secretEnv }}
+            {{- $secretName := .name }}
+            {{- range .values }}
+            - name: {{ .value }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: {{ .key }}
+            {{- end }}
+            {{- end }}
+          {{- end }}
+          # END of env values
+          {{- if .Values.persistence.enabled }}
+          volumeMounts:
+            {{- range .Values.persistence.local_storage.volumes }}
+            - name: {{ .name }}
+              mountPath: {{ .path }}
+            {{- end }}
+          {{- end }}
+
+      {{- if .Values.persistence.enabled }}
+      volumes:
+        {{- range .Values.persistence.local_storage.volumes }}
+        - name: {{ .name }}
+          persistentVolumeClaim:
+            claimName: {{ .name }}-pvc
+        {{- end }}
+      {{- end }}

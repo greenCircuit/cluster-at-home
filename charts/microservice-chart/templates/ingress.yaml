@@ -1,0 +1,21 @@
+{{- if .Values.istioIngress.enabled }}
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ .Values.appname }}-virtualservice
+  namespace: istio-ingress
+spec:
+  hosts:
+    - "{{ .Values.appname}}.{{ .Values.istioIngress.hostSufix }}"  # Should match the Gateway's hosts
+  gateways:
+    - {{ .Values.istioIngress.gateway }} 
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: "{{ .Values.appname}}-svc.{{ .Release.Namespace }}.cluster.local"
+            port:
+              number: {{ .Values.istioIngress.port }}
+{{- end }}
