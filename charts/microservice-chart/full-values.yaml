@@ -1,0 +1,87 @@
+# Deployments
+name: appname
+replicaCount: 1
+
+image:
+  repository: nginx
+  tag: latest
+  pullPolicy: Always
+
+imagePullSecrets: []
+
+securityContext:
+    allowPrivilegeEscalation: false
+    privileged: false
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    runAsUser: 1000
+    capabilities:
+      drop:
+        - ALL
+
+# setting env 
+env: 
+  ENV: STAGING
+  user: admin
+
+# set env from multiple secrets 
+secretEnv: 
+  - name: my-secret  
+    values:
+    - key: "key-inside-secret"
+      value: "value-inside-container"
+
+resources: 
+  enabled: false
+  requests:
+    cpu: "128m"
+    memory: 128Mi
+  limits:
+    cpu: "512m"
+    memory: 512Mi
+
+persistence:
+  enabled: false
+  # will create pv with local storage and pvc that label selector for it
+  localStorage:
+    nodeKey: node-role.kubernetes.io/control-plane   # use node for storage that has this label
+    volumes:
+      - name: "test"             # name and labels for pv and pvc
+        mountPath: "/tmp"             # path where storage is located inside pod
+        hostPath: "/host/path"   # path on host that will attachch
+        size: "1Gbi"             # what size local pv and pvc should be
+
+
+# Networking
+ports: 
+  - port: 80
+    name: http
+    protocol: TCP
+
+configData: 
+- name: my-congig            # name of config map be created
+  mountPath: /tmp                 # used for volumes where to attach it inside pod
+  filename: config.yaml      # filename what will be created
+  data:                      # data of config map
+    foo: bar
+    test:
+      user: password
+- name: my-congig-string
+  path: /tmp
+  filename: config.json
+  data: | 
+    {
+      "foo":"bar"
+    }
+  
+service: 
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+
+# istio virtual service 
+istioIngress:
+    enabled: true
+    gateway: my-gateway
+    port: 80
+    hostSufix: "example.com"

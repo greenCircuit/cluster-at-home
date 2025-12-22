@@ -9,35 +9,11 @@ image:
 
 imagePullSecrets: []
 
-securityContext:
-    allowPrivilegeEscalation: false
-    privileged: false
-    readOnlyRootFilesystem: true
-    runAsNonRoot: true
-    runAsUser: 1000
-    capabilities:
-      drop:
-        - ALL
-
-
-resources: 
-  enabled: false
-  requests:
-    cpu: "128m"
-    memory: 128Mi
-  limits:
-    cpu: "512m"
-    memory: 512Mi
-
-persistence:
-  enabled: false
-
 # Networking
 ports: 
   - port: 80
     name: http
     protocol: TCP
-
   
 service: 
   - protocol: TCP
