@@ -43,13 +43,14 @@ resources:
 persistence:
   enabled: false
   # will create pv with local storage and pvc that label selector for it
-  local-storage:
-    hostPath: ""  
-    node-key: node-role.kubernetes.io/control-plane   # use node for storage that has this label
+  localStorage:
+    nodeKey: node-role.kubernetes.io/control-plane   # use node for storage that has this label
     volumes:
-      - name: "test"  # name and labels for pv and pvc
-        path: "/tmp"  # path where storage is located
-        size: "1Gbi"  # what size local pv and pvc should be
+      - name: "test"             # name and labels for pv and pvc
+        mountPath: "/tmp"             # path where storage is located inside pod
+        hostPath: "/host/path"   # path on host that will attachch
+        size: "1Gbi"             # what size local pv and pvc should be
+
 
 # Networking
 ports: 
@@ -59,7 +60,7 @@ ports:
 
 configData: 
 - name: my-congig            # name of config map be created
-  path: /tmp                 # used for volumes where to attach it inside pod
+  mountPath: /tmp                 # used for volumes where to attach it inside pod
   filename: config.yaml      # filename what will be created
   data:                      # data of config map
     foo: bar

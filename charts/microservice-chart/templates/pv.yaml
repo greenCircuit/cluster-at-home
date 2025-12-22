@@ -1,5 +1,5 @@
 {{- if .Values.persistence.enabled }}
-{{- range .Values.persistence.local_storage.volumes }}
+{{- range .Values.persistence.localStorage.volumes }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -14,12 +14,12 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   storageClassName: local-storage
   local:
-    path: {{ .path }}
+    path: {{ .hostPath }}
   nodeAffinity:
     required:
       nodeSelectorTerms:
       - matchExpressions:
-        - key: {{ $.Values.persistence.local_storage.node_key }}
+        - key: {{ $.Values.persistence.localStorage.nodeKey }}
           operator: In
           values:
           - "true"

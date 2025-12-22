@@ -42,8 +42,7 @@ spec:
               containerPort: {{ .port }}
               protocol: {{ .protocol }}
           {{- end }}
-
-          {{- if or .Values.env .Values.secretEnv }}
+          # ENV
           env:
             # env vars from chart 
             {{- range $key, $value := .Values.env }}
@@ -61,20 +60,23 @@ spec:
                   key: {{ .key }}
             {{- end }}
             {{- end }}
-          {{- end }}
           # END of env values
-          {{- if .Values.persistence.enabled }}
+          # ADDING VOLUMES
           volumeMounts:
-            {{- range .Values.persistence.local_storage.volumes }}
+            # add volues uaing pvcs
+            {{- range .Values.persistence.localStorage.volumes }}
             - name: {{ .name }}
-              mountPath: {{ .path }}
+              mountPath: {{ .mountPath }}
             {{- end }}
-          {{- end }}
+            # add volues using config
+            {{- range .Values.persistence.localStorage.volumes }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+            {{- end }}
 
-      {{- if .Values.persistence.enabled }}
       volumes:
         # add volues using pvcs and pvs
-        {{- range .Values.persistence.local_storage.volumes }}
+        {{- range .Values.persistence.localStorage.volumes }}
         - name: {{ .name }}
           persistentVolumeClaim:
             claimName: {{ .name }}-pvc
@@ -86,4 +88,3 @@ spec:
             name: {{ .name }}
         {{- end }}
 
-      {{- end }}
