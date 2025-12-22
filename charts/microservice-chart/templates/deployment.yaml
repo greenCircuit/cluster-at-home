@@ -73,9 +73,17 @@ spec:
 
       {{- if .Values.persistence.enabled }}
       volumes:
+        # add volues using pvcs and pvs
         {{- range .Values.persistence.local_storage.volumes }}
         - name: {{ .name }}
           persistentVolumeClaim:
             claimName: {{ .name }}-pvc
         {{- end }}
+        # adding volumes using config
+        {{- range .Values.configData }}
+        - name: {{ .name }}
+          configMap:
+            name: {{ .name }}
+        {{- end }}
+
       {{- end }}

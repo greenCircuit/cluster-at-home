@@ -31,13 +31,6 @@ secretEnv:
     - key: "key-inside-secret"
       value: "value-inside-container"
 
-# TODO0
-initContainer:
-  enable: false
-  img: busybox
-  cmd: "bin/bash chmod 755 -R /config"
-
-
 resources: 
   enabled: false
   requests:
@@ -46,18 +39,17 @@ resources:
   limits:
     cpu: "512m"
     memory: 512Mi
-# 
-# 
+
 persistence:
   enabled: false
   # will create pv with local storage and pvc that label selector for it
   local-storage:
     hostPath: ""  
-    node-key: node-role.kubernetes.io/control-plane
+    node-key: node-role.kubernetes.io/control-plane   # use node for storage that has this label
     volumes:
-      - name: ""  # name and labels for pv and pvc
-        path: ""  # path where storage is located
-        size: ""  # what size local pv and pvc should be
+      - name: "test"  # name and labels for pv and pvc
+        path: "/tmp"  # path where storage is located
+        size: "1Gbi"  # what size local pv and pvc should be
 
 # Networking
 ports: 
@@ -65,10 +57,22 @@ ports:
     name: http
     protocol: TCP
 
-# TODO: Attaching a config as a volume
-configData: {}
-
-
+configData: 
+- name: my-congig            # name of config map be created
+  path: /tmp                 # used for volumes where to attach it inside pod
+  filename: config.yaml      # filename what will be created
+  data:                      # data of config map
+    foo: bar
+    test:
+      user: password
+- name: my-congig-string
+  path: /tmp
+  filename: config.json
+  data: | 
+    {
+      "foo":"bar"
+    }
+  
 service: 
   - protocol: TCP
     port: 80

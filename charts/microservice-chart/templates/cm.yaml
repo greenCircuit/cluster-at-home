@@ -1,9 +1,14 @@
-{{- if .Values.configData }}
+{{- range .Values.configData }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Values.name }}-cm
+  name: {{ .name }}
 data:
-    {{ .Values.configData.configName }}: |
-    {{ .Values.configData.config |toYaml | nindent 6}}
+  {{ .filename}}: |
+{{- if kindIs "map" .data }}
+{{ .data | toYaml | nindent 4 }}
+{{- else }}
+{{ .data | nindent 4 }}
+{{- end }}
+---
 {{- end }}
