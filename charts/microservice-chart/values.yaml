@@ -50,3 +50,5 @@ istioIngress:
     gateway: my-gateway
     port: 80
     hostSufix: "example.com"
+
+

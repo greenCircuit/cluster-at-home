@@ -51,7 +51,6 @@ persistence:
         hostPath: "/host/path"   # path on host that will attachch
         size: "1Gbi"             # what size local pv and pvc should be
 
-
 # Networking
 ports: 
   - port: 80
@@ -85,3 +84,24 @@ istioIngress:
     gateway: my-gateway
     port: 80
     hostSufix: "example.com"
+
+
+# TODO
+# mount existing service account
+serviceAcount: 
+  enabled: false
+  name: test
+
+# mount existing pvcs and configs
+existiongVolumes:
+  pvcs:
+  - name: "existing-pvc"
+    mountPath: "/tmp"
+  config:
+  - name: "existing-config"
+    mountPath: "/tmp"
+
+# create k8s rback/service account and mount it inside pod
+rbac:
+  type: Role   # do role or cluster role so can create correct permission object
+  roles: []    # list of k8s roles to create
