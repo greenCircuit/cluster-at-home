@@ -15,7 +15,7 @@ spec:
             prefix: /
       route:
         - destination:
-            host: "{{ .Values.appname}}-svc.{{ .Release.Namespace }}.cluster.local"
+            host: "{{ .Values.appname}}-svc.{{ .Release.Namespace }}.svc.cluster.local"
             port:
               number: {{ .Values.istioIngress.port }}
 {{- end }}
