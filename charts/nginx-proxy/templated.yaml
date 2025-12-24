@@ -1,0 +1,146 @@
+---
+# Source: static-site/templates/cm.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana
+data:
+  "grafana.conf": |
+    listen 3000;
+    server_name _;
+    location / {
+        # --- Authentication (Always On) ---
+        auth_basic "Restricted Access";
+        auth_basic_user_file /auth/.htpasswd;
+
+        # --- Standard Headers ---
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+---
+# Source: static-site/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-auth
+spec:
+  selector:
+    name: nginx-auth
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000
+---
+# Source: static-site/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-auth 
+  labels:
+    name: nginx-auth 
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: nginx-auth 
+  template:
+    metadata:
+      labels:
+        name: nginx-auth 
+    spec:
+      initContainers:
+        - name: auth-generator
+          image: nginx:latest
+          pullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000          
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "Generating auth file for user: $AUTH_USER"
+              htpasswd -c -b /auth/.htpasswd "$AUTH_USER" "$AUTH_PASS"
+          # env vars from sercers
+          env:
+          - name: AUTH_USER
+            valueFrom:
+              secretKeyRef:
+                name: auth-secret
+                key: USER_NAME
+          - name: AUTH_PASS
+            valueFrom:
+              secretKeyRef:
+                name: auth-secret
+                key: USER_PASS
+          # env env values
+          # sharing so auth file can be given to nginx container
+          volumeMounts:
+            - name: shared
+              mountPath: /auth
+      containers:
+        - name: nginx-auth 
+          image: "nginx:latest"
+          imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+          resources:
+            requests:
+              memory: 128Mi
+              cpu: 128m
+            limits:
+              memory: 512Mi
+              cpu: 512m
+
+          ports:
+          # ADDING VOLUMES
+          volumeMounts:
+            # adding shared auth
+            - name: shared
+              mountPath: /auth
+            # add generated nginx config files inside pod
+            - name: grafana
+              mountPath: /etc/nginx/conf.d
+      volumes:
+        - name: shared
+          emptyDir: {}
+        # add generated nginx config files
+        - name: grafana
+          configMap:
+            name: grafana
+---
+# Source: static-site/templates/ingress.yaml
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: grafana-VirtualService
+  namespace: istio-ingress
+spec:
+  hosts:
+    # Generates: grafana.example.com
+    - "grafana.example.com"
+  gateways:
+    - "my-gateway"
+  http:
+    - route:
+        - destination:
+            # Points to your single Nginx Service
+            host: "grafana.default.svc.cluster.local"
+            port:
+              number: 3000

@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.name }} 
+  labels:
+    name: {{ .Values.name }} 
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      name: {{ .Values.name }} 
+  template:
+    metadata:
+      labels:
+        name: {{ .Values.name }} 
+    spec:
+      initContainers:
+        - name: auth-generator
+          image: {{ .Values.initContainer.repository}}:{{ .Values.initContainer.tag}}
+          pullPolicy: {{ .Values.initContainer.pullPolicy }}
+          securityContext:
+          {{- toYaml .Values.securityContext | nindent 12 }}          
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "Generating auth file for user: $AUTH_USER"
+              htpasswd -c -b /auth/.htpasswd "$AUTH_USER" "$AUTH_PASS"
+          # env vars from sercers
+          env:
+          {{- range .Values.secretEnv }}
+          {{- $secretName := .name }}
+          {{- range .values }}
+          - name: {{ .value }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ $secretName }}
+                key: {{ .key }}
+          {{- end }}
+          {{- end }}
+          # env env values
+          # sharing so auth file can be given to nginx container
+          volumeMounts:
+            - name: shared
+              mountPath: /auth
+      containers:
+        - name: {{ .Values.name }} 
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+          {{- toYaml .Values.securityContext | nindent 12 }}          
+          {{- if .Values.resources }}
+          resources:
+            requests:
+              memory: {{ .Values.resources.requests.memory }}
+              cpu: {{ .Values.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.resources.limits.memory }}
+              cpu: {{ .Values.resources.limits.cpu }}
+          {{- end }}
+
+          ports:
+          {{- range .Values.ports }}
+            - name: {{ .name }}
+              containerPort: {{ .port }}
+              protocol: {{ .protocol }}
+          {{- end }}
+          # ADDING VOLUMES
+          volumeMounts:
+            # adding shared auth
+            - name: shared
+              mountPath: /auth
+            # add generated nginx config files inside pod
+            {{- range .Values.routes }}
+            - name: {{ .name }}
+              mountPath: /etc/nginx/conf.d
+            {{- end }}
+      volumes:
+        - name: shared
+          emptyDir: {}
+        # add generated nginx config files 
+        {{- range .Values.routes }}
+        - name: {{ .name }}
+          configMap:
+            name: {{ .name }}
+        {{- end }}
+

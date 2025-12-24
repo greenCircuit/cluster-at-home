@@ -1,0 +1,23 @@
+{{- if .Values.istio.enabled }}
+{{- range .Values.routes }}
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ .name }}-VirtualService
+  namespace: istio-ingress
+spec:
+  hosts:
+    # Generates: grafana.example.com
+    - "{{ .name }}.{{ $.Values.istio.domain }}"
+  gateways:
+    - {{ $.Values.istio.gateway | quote }}
+  http:
+    - route:
+        - destination:
+            # Points to your single Nginx Service
+            host: "{{ .name }}.{{ $.Release.Namespace }}.svc.cluster.local"
+            port:
+              number: {{ .port }}
+{{- end }}
+{{- end }}
