@@ -1,0 +1,13 @@
+# putting base cluster resources into separate manifest so they are loaded first and other things that need them dont crash
+# need to pull all crds in one place so things can work
+# this are dependencies for all cluster resources
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ./base/capacitor-ui.yaml
+- ./base/cert-manager-19.1.yaml 
+- ./base/cnpg-1.26.2.yaml
+- ./base/istio.yaml
+- ./base/kialiistio.yaml
+- ./base/local-storage-class.yaml
+- ./base/istio.yaml
