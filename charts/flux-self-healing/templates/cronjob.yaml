@@ -1,0 +1,43 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: flux-health-check
+  namespace: flux-system
+  labels:
+    flux-system: recovery
+spec:
+  schedule: "{{ .Values.schedule }}"
+  jobTemplate:
+    spec:
+      template:
+        metadata: # Added metadata (Good practice/Required for Pods)
+          labels:
+            app: flux-healer
+        spec:
+          serviceAccountName: flux-healer
+          restartPolicy: OnFailure # Required for CronJobs
+          containers:
+            - name: kubectl
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+              pullPolicy: "{{ .Values.image.pullPolicy }}"
+              securityContext:
+                allowPrivilegeEscalation: false
+                privileged: false
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                runAsUser: 1000
+                capabilities:
+                  drop:
+                    - ALL
+              command: ["/bin/bash", "-c"]
+
+              args:
+                - |
+{{ .Values.script | nindent 18 }}
+              volumeMounts:
+                - name: backup-volume
+                  mountPath: /backup
+          volumes:
+            - name: backup-volume
+              configMap:
+                name: flux-backup-manifests

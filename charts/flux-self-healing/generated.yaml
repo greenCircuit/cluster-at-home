@@ -1,0 +1,125 @@
+---
+# Source: static-site/templates/rback.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: flux-healer
+  namespace: flux-system
+---
+# Source: static-site/templates/cm.yaml
+# templates/cm.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flux-backup-manifests
+  namespace: flux-system
+data:
+  gotk-sync.yaml: |
+    apiVersion: source.toolkit.fluxcd.io/v1beta2
+    kind: GitRepository
+    metadata:
+      name: flux-system
+      namespace: flux-system
+    spec:
+      interval: 1m0s
+      ref:
+        branch: main
+      secretRef:
+        name: flux-system
+      url: ssh://git@github.com/youruser/home-lab
+    ---
+    apiVersion: kustomize.toolkit.fluxcd.io/v1beta2
+    kind: Kustomization
+    metadata:
+      name: flux-system
+      namespace: flux-system
+    spec:
+      interval: 10m0s
+      path: ./clusters/my-cluster
+      prune: true
+      sourceRef:
+        kind: GitRepository
+        name: flux-system
+---
+# Source: static-site/templates/rback.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: flux-healer-role
+rules:
+  # Allow checking/creating GitRepositories and Kustomizations
+  - apiGroups: ["source.toolkit.fluxcd.io", "kustomize.toolkit.fluxcd.io"]
+    resources: ["gitrepositories", "kustomizations"]
+    verbs: ["get", "list", "create"]
+---
+# Source: static-site/templates/rback.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: flux-healer-binding
+subjects:
+  - kind: ServiceAccount
+    name: flux-healer
+    namespace: flux-system
+roleRef:
+  kind: ClusterRole
+  name: flux-healer-role
+  apiGroup: rbac.authorization.k8s.io
+---
+# Source: static-site/templates/cronjob.yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: flux-health-check
+  namespace: flux-system
+  labels:
+    flux-system: recovery
+spec:
+  schedule: "*/30 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        metadata: 
+          labels:
+            app: flux-healer
+        spec:
+          serviceAccountName: flux-healer
+          restartPolicy: OnFailure 
+          containers:
+            - name: kubectl
+              image: "docker.io/alpine/kubectl:1.35.0"
+              pullPolicy: "Always"
+              securityContext:
+                allowPrivilegeEscalation: false
+                privileged: false
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                runAsUser: 1000
+                capabilities:
+                  drop:
+                    - ALL
+              command: ["/bin/bash", "-c"]
+              args:
+                - |
+                  echo "Checking Flux System Health..."
+                  # 1. Check GitRepository
+                  if ! kubectl get gitrepository flux-system -n flux-system > /dev/null 2>&1; then
+                    echo "MISSING: GitRepository/flux-system. Restoring..."
+                    kubectl apply -f /backup/gotk-sync.yaml
+                  else
+                    echo "OK: GitRepository exists."
+                  fi
+                  # 2. Check Kustomization
+                  if ! kubectl get kustomization flux-system -n flux-system > /dev/null 2>&1; then
+                    echo "MISSING: Kustomization/flux-system. Restoring..."
+                    kubectl apply -f /backup/gotk-sync.yaml
+                  else
+                    echo "OK: Kustomization exists."
+                  fi
+              volumeMounts:
+                - name: backup-volume
+                  mountPath: /backup
+          volumes:
+            - name: backup-volume
+              configMap:
+                name: flux-backup-manifests

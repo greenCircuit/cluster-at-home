@@ -1,0 +1,31 @@
+image:
+  repository: docker.io/alpine/kubectl
+  tag: 1.35.0 
+  pullPolicy: Always
+
+schedule: "*/30 * * * *"  # every 30 minutes
+
+# scripts that checks core manifests exists
+script: |
+  echo "Checking Flux System Health..."
+  
+  # 1. Check GitRepository
+  if ! kubectl get gitrepository flux-system -n flux-system > /dev/null 2>&1; then
+    echo "MISSING: GitRepository/flux-system. Restoring..."
+    kubectl apply -f /backup/gotk-sync.yaml
+  else
+    echo "OK: GitRepository exists."
+  fi
+
+  # 2. Check Kustomization
+  if ! kubectl get kustomization flux-system -n flux-system > /dev/null 2>&1; then
+    echo "MISSING: Kustomization/flux-system. Restoring..."
+    kubectl apply -f /backup/gotk-sync.yaml
+  else
+    echo "OK: Kustomization exists."
+  fi
+
+# flux core manifest that will recreate if cluster is missing them
+# put your manifests that want to keep alive
+config: |
+  ""

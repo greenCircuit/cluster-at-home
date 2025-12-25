@@ -1,0 +1,9 @@
+# templates/cm.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flux-backup-manifests
+  namespace: flux-system
+data:
+  gotk-sync.yaml: |
+{{ .Values.config | indent 4 }}
