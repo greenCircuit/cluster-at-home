@@ -1,0 +1,10 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: cluster-at-home 
+  namespace: flux-system
+spec:
+  interval: 90m0s
+  ref:
+    branch: main
+  url: https://github.com/greenCircuit/cluster-at-home
