@@ -19,6 +19,12 @@ securityContext:
       drop:
         - ALL
 
+env: []
+secretEnv: []
+
+readinessProbe: {}
+livenessProbe: {}
+startupProbe: {}
 
 resources: 
   enabled: false
@@ -31,24 +37,23 @@ resources:
 
 persistence:
   enabled: false
+  localStorage:
+    volumes: []
 
 # Networking
+# will create container port and svc for same port
 ports: 
-  - port: 80
+  - port: 8000
+    targetPort: 8000
     name: http
     protocol: TCP
 
-  
-service: 
-  - protocol: TCP
-    port: 80
-    targetPort: 80
 
 # istio virtual service 
 istioIngress:
     enabled: true
-    gateway: my-gateway
-    port: 80
-    hostSufix: "example.com"
+    gateway: my-gateway     
+    port: 8000
+    domain: "example.com"  # will resunt in appname.example.com domain
 
 

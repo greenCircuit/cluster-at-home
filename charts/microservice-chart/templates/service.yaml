@@ -6,7 +6,7 @@ spec:
   selector:
     name: {{ .Values.name }}
   ports:
-    {{- range .Values.service }}
+    {{- range .Values.ports }}
     - protocol: {{ .protocol }}
       port: {{ .port }}
       targetPort: {{ .targetPort }}

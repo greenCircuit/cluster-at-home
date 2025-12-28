@@ -2,11 +2,11 @@
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
-  name: {{ .Values.appname }}-virtualservice
+  name: {{ .Values.name }}-virtualservice
   namespace: istio-ingress
 spec:
   hosts:
-    - "{{ .Values.appname}}.{{ .Values.istioIngress.hostSufix }}"  # Should match the Gateway's hosts
+    - "{{ .Values.name}}.{{ .Values.istioIngress.domain }}"
   gateways:
     - {{ .Values.istioIngress.gateway }} 
   http:
@@ -15,7 +15,7 @@ spec:
             prefix: /
       route:
         - destination:
-            host: "{{ .Values.appname}}-svc.{{ .Release.Namespace }}.svc.cluster.local"
+            host: "{{ .Values.name}}-svc.{{ .Release.Namespace }}.svc.cluster.local"
             port:
               number: {{ .Values.istioIngress.port }}
 {{- end }}

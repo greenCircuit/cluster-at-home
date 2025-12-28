@@ -35,7 +35,20 @@ spec:
               memory: {{ .Values.resources.limits.memory }}
               cpu: {{ .Values.resources.limits.cpu }}
           {{- end }}
+          {{- if .Values.readinessProbe }}
+          readiesProbe:
+          {{- toYaml .Values.readinessProbe | nindent 12 }}
+          {{- end }}
 
+          {{- if .Values.livenessProbe }}
+          livenessProbe:
+          {{- toYaml .Values.livenessProbe | nindent 12 }}
+          {{- end }}
+
+          {{- if .Values.startupProbe }}
+          startupProbe:
+          {{- toYaml .Values.startupProbe | nindent 12 }}
+          {{- end }}
           ports:
           {{- range .Values.ports }}
             - name: {{ .name }}
