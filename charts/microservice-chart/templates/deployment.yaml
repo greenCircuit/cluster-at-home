@@ -26,15 +26,14 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           securityContext:
           {{- toYaml .Values.securityContext | nindent 12 }}          
+
+          # RESOURCES
           {{- if .Values.resources }}
           resources:
-            requests:
-              memory: {{ .Values.resources.requests.memory }}
-              cpu: {{ .Values.resources.requests.cpu }}
-            limits:
-              memory: {{ .Values.resources.limits.memory }}
-              cpu: {{ .Values.resources.limits.cpu }}
+          {{- toYaml .Values.resources | nindent 12 }}
           {{- end }}
+
+          # ALL PROBES DEFINED HERE
           {{- if .Values.readinessProbe }}
           readiesProbe:
           {{- toYaml .Values.readinessProbe | nindent 12 }}
@@ -49,6 +48,7 @@ spec:
           startupProbe:
           {{- toYaml .Values.startupProbe | nindent 12 }}
           {{- end }}
+          # END OF PROBES
           ports:
           {{- range .Values.ports }}
             - name: {{ .name }}

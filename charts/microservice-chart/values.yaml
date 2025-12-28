@@ -27,7 +27,6 @@ livenessProbe: {}
 startupProbe: {}
 
 resources: 
-  enabled: false
   requests:
     cpu: "128m"
     memory: 128Mi
@@ -54,6 +53,6 @@ istioIngress:
     enabled: true
     gateway: my-gateway     
     port: 8000
-    domain: "example.com"  # will resunt in appname.example.com domain
+    domain: "example.com"  # will result in appname.example.com fqdn
 
 
