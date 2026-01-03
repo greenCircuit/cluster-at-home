@@ -4,10 +4,11 @@ metadata:
   name: {{ .Values.name}}-svc
 spec:
   selector:
-    name: {{ .Values.name }}
+    app: {{ .Values.name }}
   ports:
     {{- range .Values.ports }}
     - protocol: {{ .protocol }}
       port: {{ .port }}
       targetPort: {{ .targetPort }}
+      name: {{ .name }}
     {{- end }}

@@ -39,6 +39,8 @@ persistence:
   localStorage:
     volumes: []
 
+configData: []
+
 # Networking
 # will create container port and svc for same port
 ports: 
@@ -55,4 +57,7 @@ istioIngress:
     port: 8000
     domain: "example.com"  # will result in appname.example.com fqdn
 
-
+# TODO:
+extraVolumes: []
+existingConfigs: []
+podLabels: {}

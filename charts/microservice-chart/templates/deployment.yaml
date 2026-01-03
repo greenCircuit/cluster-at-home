@@ -3,16 +3,16 @@ kind: Deployment
 metadata:
   name: {{ .Values.name }} 
   labels:
-    name: {{ .Values.name }} 
+    app: {{ .Values.name }} 
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      name: {{ .Values.name }} 
+      app: {{ .Values.name }} 
   template:
     metadata:
       labels:
-        name: {{ .Values.name }} 
+        app: {{ .Values.name }} 
     spec:
       {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -58,9 +58,8 @@ spec:
           # ENV
           env:
             # env vars from chart 
-            {{- range $key, $value := .Values.env }}
-            - name: {{ $key }}
-              value: {{ $value | quote }}
+            {{- if .Values.env }}
+            {{ .Values.env | toYaml | nindent 12 }}
             {{- end }}
             # env vars from sercers
             {{- range .Values.secretEnv }}
@@ -81,7 +80,7 @@ spec:
             - name: {{ .name }}
               mountPath: {{ .mountPath }}
             {{- end }}
-            # add volues using config
+            # add volumes using config
             {{- range .Values.persistence.localStorage.volumes }}
             - name: {{ .name }}
               mountPath: {{ .mountPath }}
