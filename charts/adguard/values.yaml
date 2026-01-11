@@ -1,15 +1,22 @@
 image:
   repository: adguard/adguardhome
-  # @default -- chart.appVersion
   tag: v0.107.65
   pullPolicy: Always
+
+# have sidecar that will read logs and send it to upstream logs collector
+# will output logs into a stdout so can get logs with logs collector
+sidecarImage:
+  repository: fluent/fluent-bit
+  tag: latest
+  pullPolicy: Always
+
 
 # putting users to separate field in so can pass them from upstream vars or using set command
 # bad practice to put username and password inside values.yaml file
 # user and password will be put in final config
 users:
-  name: "foo"
-  password: "bar"   
+  name: ""
+  password: ""   
 
 # rest if the config
 config: |
@@ -30,7 +37,7 @@ config: |
     querylog_enabled: true
     querylog_file_enabled: true
     querylog_interval: 2160h
-    querylog_size_memory: 1000
+    querylog_size_memory: 0
     anonymize_client_ip: false
     protection_enabled: true
     blocking_mode: default

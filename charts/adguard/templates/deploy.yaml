@@ -30,8 +30,19 @@ spec:
           image: busybox
           imagePullPolicy: Always
           name: copy-configmap
+          resources: 
+            limits:
+              memory: "64Mi"
+              cpu: "20m"
           securityContext:
-            runAsUser: 0
+              allowPrivilegeEscalation: false
+              privileged: false
+              readOnlyRootFilesystem: false
+              runAsNonRoot: true
+              runAsUser: 1000
+              capabilities:
+                drop:
+                  - ALL
           volumeMounts:
           - mountPath: /tmp/AdGuardHome.yaml
             name: adguard-home-config
@@ -39,16 +50,26 @@ spec:
           - mountPath: /opt/adguardhome/conf
             name: config
       containers:
-        - name: release-name-adguard-home
-          image: "{{ .Values.image.repository}}:{{ .Values.image.tag}}"
+        - name: adguard-logs-collector
+          image: "{{ .Values.sidecarImage.repository }}:{{ .Values.sidecarImage.tag }}"
+          imagePullPolicy: {{ .Values.sidecarImage.pullPolicy }} 
+          resources: 
+            limits:
+              memory: "16Mi"
+              cpu: "32m"
+          volumeMounts:
+            - name: log
+              mountPath:  /opt/adguardhome/work
+            - name: sidecar-config
+              mountPath: /fluent-bit/etc
+
+        - name: adguard-home
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }} 
           resources: 
-            requests:
-              memory: "250Mi"
-              cpu: "1m"
             limits:
               memory: "812Mi"
-              cpu: "25m"
+              cpu: "36m"
           args:
             - --config
             - /opt/adguardhome/conf/AdGuardHome.yaml
@@ -74,6 +95,19 @@ spec:
               subPath: AdGuardHome.yaml
             - name: config
               mountPath: /opt/adguardhome/conf
+            - name: log
+              mountPath: /opt/adguardhome/work/
+          securityContext:
+              allowPrivilegeEscalation: false
+              privileged: false
+              readOnlyRootFilesystem: false
+              runAsNonRoot: true
+              runAsUser: 1000
+              capabilities:
+                drop:
+                  - ALL
+                add:
+                  - NET_BIND_SERVICE # Allows binding to ports 53
           livenessProbe:
             tcpSocket:
               port: 3000
@@ -101,3 +135,8 @@ spec:
             name: adguard-config 
         - name: config
           emptyDir: {}
+        - name: log
+          emptyDir: {}
+        - name: sidecar-config
+          configMap:
+            name: adguard-logs-config
