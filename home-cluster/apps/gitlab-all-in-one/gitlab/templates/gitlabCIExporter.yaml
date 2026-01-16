@@ -1,0 +1,60 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: mvisonneau
+  namespace: flux-system
+spec:
+  interval: 1h
+  url: https://charts.visonneau.fr
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: gitlab-ci-pipelines-exporter
+  namespace: gitlab
+spec:
+  interval: 15m
+  releaseName: gitlab-ci-pipelines-exporter
+  chart:
+    spec:
+      chart: gitlab-ci-pipelines-exporter
+      version: "*" # pin later once stable
+      sourceRef:
+        kind: HelmRepository
+        name: mvisonneau
+        namespace: flux-system
+      interval: 1h
+  values:
+    gitlabSecret: gl-api-token    # secret that has api token inside
+
+    config:
+      gitlab:
+        url: http://gitlab-gitlab-hr-webservice-default:8181
+      wildcards:
+        - owner:
+            kind: group
+            name: my-group
+          include_subgroups: true
+
+    serviceMonitor:
+      enabled: true
+      labels: {} # add label that prometheus operator looks here 
+
+    securityContext:
+      runAsUser: 65534  # run as nobody user
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      privileged: false
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+      runAsUser: 1000
+      capabilities:
+        drop:
+          - ALL
+
+    resources:  
+      cpu: "8m"
+      memory: "32Mi"
+
+    redis:
+      enabled: false
