@@ -80,5 +80,5 @@ spec:
         # add generated nginx config files 
         - name: config
           configMap:
-            name: {{ .Values.name }}-nginx-proxy-config
+            name: {{ .Values.name }}-nginx-proxy-config  
 

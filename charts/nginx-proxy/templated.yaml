@@ -3,7 +3,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: release-name-nginx-proxy-config 
+  name: nginx-auth-nginx-proxy-config 
 data:
   "kialitwo.conf": |
     server {
@@ -149,7 +149,7 @@ spec:
         # add generated nginx config files 
         - name: config
           configMap:
-            name: nginx-proxy-config
+            name: nginx-auth-nginx-proxy-config
 ---
 # Source: static-site/templates/ingress.yaml
 apiVersion: networking.istio.io/v1beta1
