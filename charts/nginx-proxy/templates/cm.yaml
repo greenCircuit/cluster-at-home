@@ -1,8 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: nginx-proxy-config 
-  app: nginx-proxy-config 
+  name: {{ .Release.Name }}-nginx-proxy-config 
 data:
 {{- range .Values.ports }}
   "{{ .name }}.conf": |

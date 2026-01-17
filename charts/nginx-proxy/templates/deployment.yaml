@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Values.name }} 
+  name: {{ .Release.Name }}-{{ .Values.name }}
   labels:
-    app: {{ .Values.name }} 
+    app: {{ .Values.name }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
@@ -12,7 +12,7 @@ spec:
   template:
     metadata:
       labels:
-        app: {{ .Values.name }} 
+        app: {{ .Values.name }}
     spec:
       initContainers:
         - name: auth-generator
