@@ -4,10 +4,10 @@
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
-  name: {{ .name }}-virtualservice
+  name: {{ $.Values.name }}-virtualservice
   namespace: istio-ingress
   labels:
-    app: {{ .Values.name }} 
+    app: {{ $.Values.name }} 
 spec:
   hosts:
     # Generates: grafana.example.com
