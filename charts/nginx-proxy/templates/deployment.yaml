@@ -19,7 +19,12 @@ spec:
           image: {{ .Values.initContainer.repository}}:{{ .Values.initContainer.tag}}
           pullPolicy: {{ .Values.initContainer.pullPolicy }}
           securityContext:
-          {{- toYaml .Values.securityContext | nindent 12 }}          
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 101
+            capabilities:
+              drop:
+                - ALL
           command: ["/bin/sh", "-c"]
           args:
             - |
@@ -50,9 +55,6 @@ spec:
           {{- toYaml .Values.securityContext | nindent 12 }}          
           {{- if .Values.resources }}
           resources:
-            requests:
-              memory: {{ .Values.resources.requests.memory }}
-              cpu: {{ .Values.resources.requests.cpu }}
             limits:
               memory: {{ .Values.resources.limits.memory }}
               cpu: {{ .Values.resources.limits.cpu }}
@@ -70,17 +72,13 @@ spec:
             - name: shared
               mountPath: /auth
             # add generated nginx config files inside pod
-            {{- range .Values.routes }}
-            - name: {{ .name }}
-              mountPath: /etc/nginx/conf.d
-            {{- end }}
+            - name: config
+              mountPath: /etc/nginx/conf.d/
       volumes:
         - name: shared
           emptyDir: {}
         # add generated nginx config files 
-        {{- range .Values.routes }}
-        - name: {{ .name }}
+        - name: config
           configMap:
-            name: {{ .name }}
-        {{- end }}
+            name: nginx-proxy-config
 

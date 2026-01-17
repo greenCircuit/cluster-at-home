@@ -1,24 +1,27 @@
-{{- range .Values.routes }}
----
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .name }}
+  name: nginx-proxy-config 
 data:
+{{- range .Values.ports }}
   "{{ .name }}.conf": |
-    listen {{ .port }};
-    server_name _;
-    location / {
-        # --- Authentication (Always On) ---
-        auth_basic "Restricted Access";
-        auth_basic_user_file /auth/.htpasswd;
+    server {
+      listen {{ .port }};
+      server_name _;
+      location / {
+          # --- Authentication (Always On) ---
+          auth_basic "Restricted Access";
+          auth_basic_user_file /auth/.htpasswd;
+          proxy_pass http://{{ .target }}:{{ .port }};
 
-        # --- Standard Headers ---
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          # --- Standard Headers ---
+          proxy_http_version 1.1;
+          proxy_ssl_server_name on;
+          proxy_set_header Upgrade $http_upgrade;
+          proxy_set_header Connection "upgrade";
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      }
     }
 {{- end }}

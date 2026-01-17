@@ -1,0 +1,23 @@
+secretEnv: 
+- name: my-secret
+  values:
+  - key: "USERS"   # inside secret
+    value: "AUTH_USER" # inside pod
+  - key: "PASSWORDS"   # inside secret
+    value: "AUTH_PASS"
+
+ports:
+- name: app2 
+  target: app2.test.svc.cluster.local 
+  port: 3000
+  protocol: TCP
+- name: app1
+  target: app1.observability.svc.cluster.local
+  port: 9000
+  protocol: TCP
+    
+istio:
+  enabled: true
+  gateway: tls-gateway
+  domain: example.com
+

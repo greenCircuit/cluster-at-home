@@ -6,8 +6,9 @@ spec:
   selector:
     name: {{ .Values.name }}
   ports:
-    {{- range .Values.routes }}
+    {{- range .Values.ports }}
     - protocol: {{ .protocol }}
       port: {{ .port }}
       targetPort: {{ .port }}
+      name: {{ .name }}
     {{- end }}

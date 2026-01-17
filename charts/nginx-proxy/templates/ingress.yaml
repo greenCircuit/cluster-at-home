@@ -1,10 +1,10 @@
 {{- if .Values.istio.enabled }}
-{{- range .Values.routes }}
+{{- range .Values.ports }}
 ---
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
-  name: {{ .name }}-VirtualService
+  name: {{ .name }}-virtualservice
   namespace: istio-ingress
 spec:
   hosts:
@@ -16,7 +16,7 @@ spec:
     - route:
         - destination:
             # Points to your single Nginx Service
-            host: "{{ .name }}.{{ $.Release.Namespace }}.svc.cluster.local"
+            host: "nginx-auth.{{ $.Release.Namespace }}.svc.cluster.local"
             port:
               number: {{ .port }}
 {{- end }}

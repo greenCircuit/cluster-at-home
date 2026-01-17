@@ -9,20 +9,10 @@ initContainer:
   pullPolicy: Always
 
 image:
-  repository: nginx
-  tag: alpine3.23
+  repository: nginxinc/nginx-unprivileged
+  tag: 1.29.3-alpine3.22-otel
   pullPolicy: Always
 
-imagePullSecrets: []
-
-securityContext:
-    allowPrivilegeEscalation: false
-    privileged: false
-    runAsNonRoot: true
-    runAsUser: 1000
-    capabilities:
-      drop:
-        - ALL
 
 # set env so can create a secret for nginx login 
 secretEnv: 
@@ -35,14 +25,11 @@ secretEnv:
 
 resources: 
   enabled: true 
-  requests:
-    cpu: "128m"
-    memory: 128Mi
   limits:
-    cpu: "512m"
-    memory: 512Mi
+    cpu: "16m"
+    memory: 128Mi
 
-routes: []
+ports: []
   # - name: grafana
   #   target: http://grafana.monitoring.svc.cluster.local:3000
   #   port: 3000        # pod port spec and svc port spec
