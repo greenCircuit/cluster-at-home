@@ -6,6 +6,8 @@ kind: VirtualService
 metadata:
   name: {{ .name }}-virtualservice
   namespace: istio-ingress
+  labels:
+    app: {{ .Values.name }} 
 spec:
   hosts:
     # Generates: grafana.example.com
