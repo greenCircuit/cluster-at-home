@@ -82,3 +82,4 @@ spec:
           configMap:
             name: {{ .Values.name }}-nginx-proxy-config  
 
+
