@@ -15,13 +15,13 @@ image:
 
 
 # set env so can create a secret for nginx login 
-secretEnv: 
-  - name: auth-secret    # name of secret that will be used
-    values:
-    - key: "USER_NAME"   # inside secret
-      value: "AUTH_USER" # inside pod
-    - key: "USER_PASS"   # inside secret
-      value: "AUTH_PASS" # inside pod
+secretEnv: {}
+  # - name: auth-secret    # name of secret that will be used
+  #   values:
+  #   - key: "USER_NAME"   # inside secret
+  #     value: "AUTH_USER" # inside pod
+  #   - key: "USER_PASS"   # inside secret
+  #     value: "AUTH_PASS" # inside pod
 
 resources: 
   enabled: true 

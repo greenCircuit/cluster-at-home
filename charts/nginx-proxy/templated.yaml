@@ -1,0 +1,196 @@
+---
+# Source: static-site/templates/cm.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: release-name-nginx-proxy-config 
+data:
+  "kialitwo.conf": |
+    server {
+      listen 20001;
+      server_name _;
+      location / {
+          # --- Authentication (Always On) ---
+          auth_basic "Restricted Access";
+          auth_basic_user_file /auth/.htpasswd;
+          proxy_pass http://kiali.istio-system.svc.cluster.local:20001;
+
+          # --- Standard Headers ---
+          proxy_http_version 1.1;
+          proxy_ssl_server_name on;
+          proxy_set_header Upgrade $http_upgrade;
+          proxy_set_header Connection "upgrade";
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      }
+    }
+  "capacitor.conf": |
+    server {
+      listen 9000;
+      server_name _;
+      location / {
+          # --- Authentication (Always On) ---
+          auth_basic "Restricted Access";
+          auth_basic_user_file /auth/.htpasswd;
+          proxy_pass http://capacitor.observability.svc.cluster.local:9000;
+
+          # --- Standard Headers ---
+          proxy_http_version 1.1;
+          proxy_ssl_server_name on;
+          proxy_set_header Upgrade $http_upgrade;
+          proxy_set_header Connection "upgrade";
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      }
+    }
+---
+# Source: static-site/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-auth
+  app: nginx-auth
+  labels:
+    app: nginx-auth 
+spec:
+  selector:
+    app: nginx-auth
+  ports:
+    - protocol: TCP
+      port: 20001
+      targetPort: 20001
+      name: kialitwo
+    - protocol: TCP
+      port: 9000
+      targetPort: 9000
+      name: capacitor
+---
+# Source: static-site/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-auth
+  labels:
+    app: nginx-auth
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-auth 
+  template:
+    metadata:
+      labels:
+        app: nginx-auth
+    spec:
+      initContainers:
+        - name: auth-generator
+          image: httpd:alpine3.23
+          pullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 101
+            capabilities:
+              drop:
+                - ALL
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "Generating auth file for user: $AUTH_USER"
+              htpasswd -c -b /auth/.htpasswd "$AUTH_USER" "$AUTH_PASS"
+          # env vars from sercers
+          env:
+          - name: AUTH_USER
+            valueFrom:
+              secretKeyRef:
+                name: adguard-exporter
+                key: USERS
+          - name: AUTH_PASS
+            valueFrom:
+              secretKeyRef:
+                name: adguard-exporter
+                key: PASSWORDS
+          # env env values
+          # sharing so auth file can be given to nginx container
+          volumeMounts:
+            - name: shared
+              mountPath: /auth
+      containers:
+        - name: nginx-auth 
+          image: "nginxinc/nginx-unprivileged:1.29.3-alpine3.22-otel"
+          imagePullPolicy: Always
+          securityContext:
+            null
+          resources:
+            limits:
+              memory: 128Mi
+              cpu: 16m
+
+          ports:
+            - name: kialitwo
+              containerPort: 20001
+              protocol: TCP
+            - name: capacitor
+              containerPort: 9000
+              protocol: TCP
+          # ADDING VOLUMES
+          volumeMounts:
+            # adding shared auth
+            - name: shared
+              mountPath: /auth
+            # add generated nginx config files inside pod
+            - name: config
+              mountPath: /etc/nginx/conf.d/
+      volumes:
+        - name: shared
+          emptyDir: {}
+        # add generated nginx config files 
+        - name: config
+          configMap:
+            name: nginx-proxy-config
+---
+# Source: static-site/templates/ingress.yaml
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: kialitwo-virtualservice
+  namespace: istio-ingress
+  labels:
+    app: nginx-auth 
+spec:
+  hosts:
+    # Generates: grafana.example.com
+    - "kialitwo.dev.io"
+  gateways:
+    - "gateway-tls"
+  http:
+    - route:
+        - destination:
+            # Points to your single Nginx Service
+            host: "nginx-auth.default.svc.cluster.local"
+            port:
+              number: 20001
+---
+# Source: static-site/templates/ingress.yaml
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: capacitor-virtualservice
+  namespace: istio-ingress
+  labels:
+    app: nginx-auth 
+spec:
+  hosts:
+    # Generates: grafana.example.com
+    - "capacitor.dev.io"
+  gateways:
+    - "gateway-tls"
+  http:
+    - route:
+        - destination:
+            # Points to your single Nginx Service
+            host: "nginx-auth.default.svc.cluster.local"
+            port:
+              number: 9000
