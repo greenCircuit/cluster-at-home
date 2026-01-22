@@ -10,6 +10,13 @@ sidecarImage:
   tag: latest
   pullPolicy: Always
 
+logsSidecar:
+  enabled: true     # add sidecar and volumes or not
+  configName: adguard-logs-config
+  existingConfig: 
+    enabled: false   # use other cm other that provided, name your config the same way as .logsSidecar.configName
+
+timeZone: UTC
 
 # putting users to separate field in so can pass them from upstream vars or using set command
 # bad practice to put username and password inside values.yaml file

@@ -1,7 +1,9 @@
+# default config will put querylog.json to stdout
+{{- if and .Values.logsSidecar.enabled .Values.logsSidecar.existingConfig.enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: adguard-logs-config 
+  name: {{ .Values.logsSidecar.configName }} 
 data:
   fluent-bit.conf: |
     [SERVICE]
@@ -51,3 +53,4 @@ data:
         Time_Key    T
         Time_Format %Y-%m-%dT%H:%M:%S.%LZ
         Time_Keep   On
+{{- end }}

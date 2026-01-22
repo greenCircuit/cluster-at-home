@@ -50,6 +50,7 @@ spec:
           - mountPath: /opt/adguardhome/conf
             name: config
       containers:
+        {{- if .Values.logsSidecar.enabled }}
         - name: adguard-logs-collector
           image: "{{ .Values.sidecarImage.repository }}:{{ .Values.sidecarImage.tag }}"
           imagePullPolicy: {{ .Values.sidecarImage.pullPolicy }} 
@@ -62,6 +63,7 @@ spec:
               mountPath:  /opt/adguardhome/work
             - name: sidecar-config
               mountPath: /fluent-bit/etc
+        {{- end }}
 
         - name: adguard-home
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -78,7 +80,7 @@ spec:
             - --no-check-update
           env:
             - name: TZ
-              value: UTC
+              value: {{ .Values.timeZone }}
           ports:
             - name: dns-tcp
               containerPort: 53
@@ -89,14 +91,6 @@ spec:
             - name: http
               containerPort: 3000
               protocol: TCP
-          volumeMounts:
-            - name: adguard-home-config
-              mountPath: /tmp/AdGuardHome.yaml
-              subPath: AdGuardHome.yaml
-            - name: config
-              mountPath: /opt/adguardhome/conf
-            - name: log
-              mountPath: /opt/adguardhome/work/
           securityContext:
               allowPrivilegeEscalation: false
               privileged: false
@@ -129,6 +123,16 @@ spec:
             failureThreshold: 30
             timeoutSeconds: 1
             periodSeconds: 5
+            
+      {{- if .Values.logsSidecar.enabled }}    
+          volumeMounts:
+            - name: adguard-home-config
+              mountPath: /tmp/AdGuardHome.yaml
+              subPath: AdGuardHome.yaml
+            - name: config
+              mountPath: /opt/adguardhome/conf
+            - name: log
+              mountPath: /opt/adguardhome/work/
       volumes:
         - name: adguard-home-config
           configMap:
@@ -139,4 +143,5 @@ spec:
           emptyDir: {}
         - name: sidecar-config
           configMap:
-            name: adguard-logs-config
+            name: {{ .Values.logsSidecar.configName }} 
+      {{- end }}
