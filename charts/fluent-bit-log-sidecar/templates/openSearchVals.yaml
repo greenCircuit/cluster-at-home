@@ -1,0 +1,28 @@
+# Set replicas to 1
+replicas: 1
+
+# Force single-node mode in env
+extraEnvs:
+  - name: discovery.type
+    value: single-node
+  - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
+    value: StrongPassword@1
+
+# IMPORTANT: You must ensure cluster.initial_master_nodes is NOT being set.
+# If your chart version allows it, try setting this to null:
+config:
+  network:
+    host: 0.0.0.0
+  opensearch.yml:
+    network.host: 0.0.0.0
+
+singleNode: true
+persistence:
+  enabled: false
+
+podAnnotations:
+  sidecar.istio.io/inject: "false"
+
+#   helm upgrade --install opensearch  opensearch/opensearch -f openSearchVals.yaml -n testing
+
+#  curl -k -u admin:StrongPassword@1 https://opensearch-cluster-master.observability.svc.cluster.local:9200/_cat/indices?v

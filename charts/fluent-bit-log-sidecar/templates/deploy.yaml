@@ -1,0 +1,113 @@
+# Namespace (optional)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: log-test
+---
+# ConfigMap for Fluent Bit
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluent-bit-config
+  namespace: testing
+data:
+  fluent-bit.conf: |
+      [SERVICE]
+          Flush        1
+          Log_Level    debug
+          Daemon       off
+          # Absolute path is safer
+          Parsers_File /fluent-bit/etc/parsers.conf
+
+      [INPUT]
+          Name             tail
+          Path             /var/log/log.json
+          Tag              app.logs
+          Read_from_Head   true
+          Parser           json
+          Mem_Buf_Limit    5MB
+
+      [OUTPUT]
+          Name             opensearch
+          Match            app.logs
+          Host             opensearch-cluster-master.testing.svc.cluster.local
+          Port             9200
+          Index            fluentbit-test
+          # Credentials
+          HTTP_User        admin
+          HTTP_Passwd      StrongPassword@1 
+          # TLS Settings
+          tls              On
+          tls.verify       Off
+          # OpenSearch Compatibility
+          Suppress_Type_Name On
+          Logstash_Format  On
+          Logstash_Prefix  fluentbit-test
+          Replace_Dots     On
+
+  parsers.conf: |
+    [PARSER]
+        Name        json
+        Format      json
+        Time_Key    timestamp
+        # Time_Format %Y-%m-%dT%H:%M:%S
+        # Time_Keep   On
+---
+# Deployment with 2 containers
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: log-writer
+  namespace: testing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: log-writer
+  template:
+    metadata:
+      labels:
+        app: log-writer
+    spec:
+      volumes:
+        - name: shared-logs
+          emptyDir: {}
+        - name: fluent-bit-config
+          configMap:
+            name: fluent-bit-config
+      containers:
+        # Container 1: Writes JSON logs to file
+        - name: app
+          image: busybox
+          resources: {}
+          command:
+            - sh
+            - -c
+            - |
+              i=0
+              while true; do
+                TS=$(date -u +"%Y-%m-%dT%H:%M:%S")
+                singleRandom=$((RANDOM % 10))
+                bigRandom=$((RANDOM % 10000))
+                echo "{\"timestamp\": \"$TS\", \"index\": $i, \"single\": $singleRandom, \"big\": $bigRandom}" >> /var/log/log.json
+                i=$((i+1))
+                sleep 2
+              done
+          volumeMounts:
+            - name: shared-logs
+              mountPath: /var/log
+
+        # Container 2: Fluent Bit sidecar
+        - name: fluent-bit
+          image: fluent/fluent-bit:2.2
+          # image: busybox:latest 
+          # command: ["/bin/sh","-c", "sleep", "10d"]
+          # command: ["sh", "-c"]
+          args: ["-c", "/fluent-bit/etc/fluent-bit.conf"]
+          resources: {}
+          # args: ["while true; do sleep 30; done"]
+          volumeMounts:
+            - name: shared-logs
+              mountPath: /var/log
+            - name: fluent-bit-config
+              mountPath: /fluent-bit/etc

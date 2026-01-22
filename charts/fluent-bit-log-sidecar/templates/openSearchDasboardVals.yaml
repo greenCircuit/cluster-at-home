@@ -1,0 +1,15 @@
+opensearchHosts: "https://opensearch-cluster-master:9200"
+
+# Use the same password you set for the OpenSearch cluster
+config:
+  opensearch_dashboards.yml: |-
+    opensearch.username: "admin"
+    opensearch.password: "StrongPassword@1"
+    opensearch.ssl.verificationMode: none
+
+# If you want to access it from outside the cluster without an Ingress:
+service:
+  type: NodePort
+  port: 5601
+
+# helm upgrade --install my-dashboards opensearch/opensearch-dashboards -f openSearchDasboardVals.yaml -n testing

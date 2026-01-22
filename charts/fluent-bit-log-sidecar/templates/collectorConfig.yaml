@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: adguard-logs-config 
+data:
+  fluent-bit.conf: |
+    [SERVICE]
+        Flush        1
+        Daemon       Off
+        Log_Level    info
+        Parsers_File parsers.conf
+
+    [INPUT]
+        Name           tail
+        Path           /opt/adguardhome/work/data/querylog.json
+        Read_from_Head false
+        Tag            adguard.query
+
+    [FILTER]
+        Name        parser
+        Match       adguard.query
+        Key_Name    log
+        Parser      adguard_json
+        Reserve_Data Off
+
+    [FILTER]
+        Name    modify
+        Match   adguard.query
+        Remove  T
+        Remove  QT
+        Remove  QC
+        Remove  CP
+        Remove  Answer
+        Remove  Result
+        Remove  Cached
+        Remove  IP
+        Remove  Elapsed
+        Remove  date
+        Remove  Upstream
+
+    [OUTPUT]
+        Name   stdout
+        Match  adguard.query
+        Format json
+
+  parsers.conf: |
+    [PARSER]
+        Name        adguard_json
+        Format      json
+        Time_Key    time
+        Time_Key    T
+        Time_Format %Y-%m-%dT%H:%M:%S.%LZ
+        Time_Keep   On
