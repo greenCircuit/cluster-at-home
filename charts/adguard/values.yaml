@@ -18,6 +18,8 @@ logsSidecar:
 
 timeZone: UTC
 
+hostNetwork: true  # use host network so incoming ips are not NATed and can see incoming ip instead on pod ip as upstream
+
 # putting users to separate field in so can pass them from upstream vars or using set command
 # bad practice to put username and password inside values.yaml file
 # user and password will be put in final config

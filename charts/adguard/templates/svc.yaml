@@ -14,6 +14,7 @@ spec:
   selector:
     app.kubernetes.io/name: adguard
 ---
+{{ .if not .Values.hostNetwork }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -31,3 +32,4 @@ spec:
       targetPort: 53
       name: dns-tcp
   type: LoadBalancer
+{{- end }}

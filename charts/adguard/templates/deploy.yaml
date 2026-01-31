@@ -19,7 +19,12 @@ spec:
         app.kubernetes.io/name: adguard
     spec:      
       automountServiceAccountToken: false
+      {{- if .Values.hostNetwork}}
+      hostNetwork: true # Enables host networking
+      dnsPolicy: ClusterFirstWithHostNet # Ensures cluster DNS access
+      {{ else }}
       dnsPolicy: ClusterFirst
+      {{- end }}
       initContainers:
         - command:
           - sh
