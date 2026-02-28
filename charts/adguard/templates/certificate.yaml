@@ -1,0 +1,21 @@
+{{- if .Values.ssl.enabled }}
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ .Values.ssl.issuer }} 
+spec:
+  selfSigned: {}  
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: adguard-certificate
+spec:
+  secretName: adguard-ssl 
+  issuerRef:
+    name: {{ .Values.ssl.issuer }} 
+    kind: Issuer
+    group: cert-manager.io
+  dnsNames:
+  - adguard.local
+{{- end }}
