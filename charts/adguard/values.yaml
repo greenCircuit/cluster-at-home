@@ -58,7 +58,7 @@ users:
 # rest if the config
 config: |
   bind_host: 0.0.0.0
-  bind_port: 8443
+  bind_port: 3000 
   beta_bind_port: 0
   auth_attempts: 5
   block_auth_min: 15
