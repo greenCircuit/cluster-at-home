@@ -19,22 +19,20 @@ spec:
         app.kubernetes.io/name: adguard
     spec:      
       automountServiceAccountToken: false
-      {{- if .Values.hostNetwork}}
-      hostNetwork: true # Enables host networking
-      dnsPolicy: ClusterFirstWithHostNet # Ensures cluster DNS access
-      {{ else }}
+      {{- if .Values.hostNetwork }}
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      {{- else }}
       dnsPolicy: ClusterFirst
       {{- end }}
       initContainers:
-        - command:
-          - sh
-          - -c
+        - name: copy-configmap
+          command: ["sh", "-c"]
+          args:
           - |
-              mkdir -p /opt/adguardhome/conf
-              cp /tmp/AdGuardHome.yaml /opt/adguardhome/conf/AdGuardHome.yaml
+{{- .Values.copyConfigScript.args | nindent 12 }}
           image: busybox
           imagePullPolicy: Always
-          name: copy-configmap
           resources: 
             limits:
               memory: "64Mi"
@@ -49,11 +47,13 @@ spec:
                 drop:
                   - ALL
           volumeMounts:
+          # cm mounts config
           - mountPath: /tmp/AdGuardHome.yaml
             name: adguard-home-config
             subPath: AdGuardHome.yaml
+          # config that is added to adguard
           - mountPath: /opt/adguardhome/conf
-            name: config
+            name: shared-config
       containers:
         {{- if .Values.logsSidecar.enabled }}
         - name: adguard-logs-collector
@@ -64,9 +64,11 @@ spec:
               memory: "16Mi"
               cpu: "32m"
           volumeMounts:
-            - name: log
+            # logs file
+            - name: log-share
               mountPath:  /opt/adguardhome/work
-            - name: sidecar-config
+            # logs scrape config
+            - name: logs-sidecar-config
               mountPath: /fluent-bit/etc
         {{- end }}
 
@@ -94,59 +96,94 @@ spec:
               containerPort: 53
               protocol: UDP
             - name: http
-              containerPort: 3000
+              containerPort: {{ .Values.probes.port }}
               protocol: TCP
           securityContext:
               allowPrivilegeEscalation: false
-              privileged: false
-              readOnlyRootFilesystem: false
-              runAsNonRoot: true
-              runAsUser: 1000
               capabilities:
                 drop:
                   - ALL
                 add:
                   - NET_BIND_SERVICE # Allows binding to ports 53
           livenessProbe:
-            tcpSocket:
-              port: 3000
+            tcpSocket:            
+              {{- if .Values.hostNetwork}}
+              host: 127.0.0.1
+              {{- end }}
+              port: {{ .Values.probes.port }}
             initialDelaySeconds: 0
             failureThreshold: 3
             timeoutSeconds: 1
             periodSeconds: 10
           readinessProbe:
-            tcpSocket:
-              port: 3000
+            tcpSocket:            
+              {{- if .Values.hostNetwork}}
+              host: 127.0.0.1
+              {{- end }}
+              port: {{ .Values.probes.port }}
             initialDelaySeconds: 0
             failureThreshold: 3
             timeoutSeconds: 1
             periodSeconds: 10
           startupProbe:
-            tcpSocket:
-              port: 3000
+            tcpSocket:            
+              {{- if .Values.hostNetwork}}
+              host: 127.0.0.1
+              {{- end }}
+              port: {{ .Values.probes.port }}
             initialDelaySeconds: 0
             failureThreshold: 30
             timeoutSeconds: 1
             periodSeconds: 5
             
-      {{- if .Values.logsSidecar.enabled }}    
           volumeMounts:
             - name: adguard-home-config
               mountPath: /tmp/AdGuardHome.yaml
               subPath: AdGuardHome.yaml
-            - name: config
+            # shared config from init container  
+            - name: shared-config
               mountPath: /opt/adguardhome/conf
-            - name: log
+            # shared mount between fluentBit and adguard
+            {{- if .Values.logsSidecar.enabled }}    
+            - name: log-share
               mountPath: /opt/adguardhome/work/
+            {{- end }}
+            # ssl config
+            {{- if .Values.ssl.enabled }}
+            - name: ssl
+              mountPath: /opt/adguardhome/ssl
+              readOnly: true
+            {{- end }}
       volumes:
+      # sharing config between init container and main container
         - name: adguard-home-config
           configMap:
-            name: adguard-config 
-        - name: config
+            name: adguard-config
+      # ssl certs for https
+      {{- if .Values.ssl.enabled }}
+        - name: ssl
+          secret:
+            secretName: adguard-ssl
+            items:
+            - key: tls.crt
+              path: tls.crt
+            - key: tls.key
+              path: tls.key
+      {{- end }}
+      # store config persistently
+        - name: shared-config
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: adguard-pvc 
+          {{- else }}
           emptyDir: {}
-        - name: log
+          {{- end }}
+        # fluentBit config and shared log file
+        {{- if .Values.logsSidecar.enabled }}    
+        - name: log-share
           emptyDir: {}
-        - name: sidecar-config
+        - name: logs-sidecar-config
           configMap:
             name: {{ .Values.logsSidecar.configName }} 
-      {{- end }}
+        {{- end }}
+
