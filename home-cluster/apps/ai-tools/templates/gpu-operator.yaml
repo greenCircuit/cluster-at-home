@@ -1,0 +1,43 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: nvidia
+  namespace: flux-system
+spec:
+  interval: 60m
+  url: https://helm.ngc.nvidia.com/nvidia
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: gpu-operator
+  namespace: flux-system
+spec:
+  targetNamespace: gpu-operator
+  interval: 5m
+  chart:
+    spec:
+      chart: gpu-operator
+      version: "*"   # adjust if needed
+      sourceRef:
+        kind: HelmRepository
+        name: nvidia
+        namespace: flux-system
+  install:
+    createNamespace: true
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    driver:
+      enabled: true        # set false if driver already installed on nodes
+    toolkit:
+      enabled: true
+    devicePlugin:
+      enabled: true
+    migManager:
+      enabled: false       # enable only if using MIG GPUs
+    dcgmExporter:
+      enabled: true
+    nodeFeatureDiscovery:
+      enabled: true

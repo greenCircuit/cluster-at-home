@@ -1,0 +1,5 @@
+apiVersion: v2
+appVersion: v0.107.7
+description: running ollama inside k8s cluster 
+name: ollama-llm 
+version: 1.0.0 

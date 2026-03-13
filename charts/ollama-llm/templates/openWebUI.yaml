@@ -14,7 +14,7 @@ metadata:
   name: open-web-ui-hr 
   namespace: flux-system
 spec:
-  targetNamespace: default
+  targetNamespace: testing 
   interval: 5m
   chart:
     spec:

@@ -9,8 +9,8 @@ resources:
     memory: "500Mi"
     cpu: "10m"
   limits:
-    memory: "4Gi"
-    cpu: "2"
+    memory: "2Gi"
+    cpu: "500m"
 
 securityContext: 
   # allowPrivilegeEscalation: false
@@ -33,14 +33,8 @@ persistence:
 # if want to install open-webui using flux helm release custom resources
 # need to have flux custom resources available on the cluster 
 openWebUI:
-  enabled: true
-  namespace: default         # name space where open webui will run
-  istioIngress:
-    enabled: true
-    gateway: "my-gateway"    # istio gateway that want to use
-    domain: "example.com"    # domain for istio you want to use, gateways should have this domain as well
-    domainPrefix: "ai"       # subdomain so can navigate using prefix.domain
-  values:
-    # Disable the bundled Ollama instance
-    ollama:
-      enabled: false
+  extraEnvVars:
+    - name: OLLAMA_BASE_URL
+      value: "http://ollama.services.svc.cluster.local"
+  ollama:
+    enabled: false
