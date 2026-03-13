@@ -1,0 +1,82 @@
+# using local file system
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: frigate-pv-recordings-host
+  labels:
+    local: frigate-pv-recordings-host
+spec:
+  capacity:
+    storage: {{ .Values.storage.recordings.capacity }}
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: {{ .Values.storage.recordings.reclaimPolicy }} 
+  storageClassName: local-storage
+  local:
+    path: {{ .Values.storage.recordings.hostPath }} 
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: node-role.kubernetes.io/control-plane
+          operator: In
+          values:
+          - "true" 
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: frigate-pvc-recordings-host
+spec:
+  selector:
+    matchLabels:
+      local: frigate-pv-recordings-host
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.storage.recordings.capacity }}  # Must match or be less than PV size
+  storageClassName: local-storage
+---
+# storage to make config persistent, db is not reset when pod is restarted
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: frigate-config-host
+  labels:
+    local: frigate-config-host
+spec:
+  capacity:
+    storage: {{ .Values.storage.config.capacity }}
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy:  {{ .Values.storage.config.reclaimPolicy }} 
+  storageClassName: local-storage
+  local:
+    path: {{ .Values.storage.config.hostPath }} 
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: node-role.kubernetes.io/control-plane
+          operator: In
+          values:
+          - "true" 
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: frigate-config-host
+spec:
+  selector:
+    matchLabels:
+      local: frigate-config-host
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.storage.config.capacity }}
+  volumeMode: Filesystem
+  storageClassName: local-storage
