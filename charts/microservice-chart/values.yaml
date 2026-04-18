@@ -65,4 +65,6 @@ existingVolumes:
   # - name: my-existing-cm
   #   mountPath: /etc/config
 
+strategy: RollingUpdate  # RollingUpdate or Recreate
+
 podLabels: {}
