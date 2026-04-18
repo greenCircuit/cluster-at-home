@@ -1,0 +1,41 @@
+suite: istio ingress
+templates:
+  - ingress.yaml
+tests:
+  - it: should not render VirtualService when disabled
+    values:
+      - ../ci/base.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render VirtualService when enabled
+    values:
+      - ../ci/with-ingress.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: should set correct host from name and domain
+    values:
+      - ../ci/with-ingress.yaml
+    asserts:
+      - equal:
+          path: spec.hosts[0]
+          value: test-app.example.com
+
+  - it: should set correct gateway
+    values:
+      - ../ci/with-ingress.yaml
+    asserts:
+      - equal:
+          path: spec.gateways[0]
+          value: my-gateway
+
+  - it: should route to correct destination port
+    values:
+      - ../ci/with-ingress.yaml
+    asserts:
+      - equal:
+          path: spec.http[0].route[0].destination.port.number
+          value: 8080

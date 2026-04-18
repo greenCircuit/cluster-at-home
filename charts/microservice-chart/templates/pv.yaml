@@ -1,5 +1,6 @@
 {{- if .Values.persistence.enabled }}
 {{- range .Values.persistence.localStorage.volumes }}
+---
 apiVersion: v1
 kind: PersistentVolume
 metadata:

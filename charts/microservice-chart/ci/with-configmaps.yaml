@@ -1,0 +1,40 @@
+name: test-app
+
+image:
+  repository: nginx
+  tag: latest
+  pullPolicy: IfNotPresent
+
+ports:
+  - port: 8080
+    targetPort: 8080
+    name: http
+    protocol: TCP
+
+istioIngress:
+  enabled: false
+
+persistence:
+  enabled: false
+  localStorage:
+    volumes: []
+
+# tests both configData rendering paths: map data and raw string data
+configData:
+  - name: app-config
+    mountPath: /etc/app
+    filename: config.yaml
+    data:
+      server:
+        port: 8080
+      log_level: info
+  - name: app-config-json
+    mountPath: /etc/app
+    filename: config.json
+    data: |
+      {
+        "foo": "bar"
+      }
+
+env: []
+secretEnv: []

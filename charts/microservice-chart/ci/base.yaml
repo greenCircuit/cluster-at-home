@@ -1,0 +1,25 @@
+name: test-app
+replicaCount: 1
+
+image:
+  repository: nginx
+  tag: latest
+  pullPolicy: IfNotPresent
+
+ports:
+  - port: 8080
+    targetPort: 8080
+    name: http
+    protocol: TCP
+
+istioIngress:
+  enabled: false
+
+persistence:
+  enabled: false
+  localStorage:
+    volumes: []
+
+configData: []
+env: []
+secretEnv: []

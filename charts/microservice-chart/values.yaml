@@ -57,7 +57,12 @@ istioIngress:
     port: 8000
     domain: "example.com"  # will result in appname.example.com fqdn
 
-# TODO:
-extraVolumes: []
-existingConfigs: []
+existingVolumes:
+  pvcs: []
+  # - name: my-existing-pvc
+  #   mountPath: /data
+  configMaps: []
+  # - name: my-existing-cm
+  #   mountPath: /etc/config
+
 podLabels: {}
