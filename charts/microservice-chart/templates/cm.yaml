@@ -1,4 +1,5 @@
 {{- range .Values.configData }}
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -10,5 +11,4 @@ data:
 {{- else }}
 {{ .data | nindent 4 }}
 {{- end }}
----
 {{- end }}

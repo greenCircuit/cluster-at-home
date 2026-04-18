@@ -1,0 +1,30 @@
+include:
+  - project: home-lab/pipeline-catalog
+    file: pipelines/stages.yaml
+  - project: home-lab/pipeline-catalog
+    file: pipelines/k8s.yaml
+
+unittest-microservice-chart:
+  stage: unit-test
+  image:
+    name: helmunittest/helm-unittest
+    entrypoint: [""]
+  script:
+    - helm unittest charts/microservice-chart
+
+check-microservice-chart:
+  extends: .check-helm
+  parallel:
+    matrix:
+      - VALUES:
+          - ci/base.yaml
+          - ci/with-persistence.yaml
+          - ci/with-configmaps.yaml
+          - ci/with-ingress.yaml
+          - ci/with-env.yaml
+          - ci/with-probes.yaml
+          - ci/with-resources.yaml
+          - ci/with-existing-volumes.yaml
+  variables:
+    CHECK_PATH: charts/microservice-chart
+

@@ -1,0 +1,65 @@
+suite: persistence
+tests:
+  - it: should not render PV when disabled
+    templates:
+      - pv.yaml
+    values:
+      - ../ci/base.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should not render PVC when disabled
+    templates:
+      - pvc.yaml
+    values:
+      - ../ci/base.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render PV with correct path and size
+    templates:
+      - pv.yaml
+    values:
+      - ../ci/with-persistence.yaml
+    asserts:
+      - equal:
+          path: spec.local.path
+          value: /mnt/storage/data
+      - equal:
+          path: spec.capacity.storage
+          value: 5Gi
+
+  - it: should render PV with correct nodeAffinity key
+    templates:
+      - pv.yaml
+    values:
+      - ../ci/with-persistence.yaml
+    asserts:
+      - equal:
+          path: spec.nodeAffinity.required.nodeSelectorTerms[0].matchExpressions[0].key
+          value: node-role.kubernetes.io/control-plane
+
+  - it: should render PVC with correct storage and storageClass
+    templates:
+      - pvc.yaml
+    values:
+      - ../ci/with-persistence.yaml
+    asserts:
+      - equal:
+          path: spec.resources.requests.storage
+          value: 5Gi
+      - equal:
+          path: spec.storageClassName
+          value: local-storage
+
+  - it: should render PVC with label selector matching PV
+    templates:
+      - pvc.yaml
+    values:
+      - ../ci/with-persistence.yaml
+    asserts:
+      - equal:
+          path: spec.selector.matchLabels.local
+          value: data

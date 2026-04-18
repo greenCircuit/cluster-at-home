@@ -1,0 +1,27 @@
+name: test-app
+
+image:
+  repository: nginx
+  tag: latest
+  pullPolicy: IfNotPresent
+
+ports:
+  - port: 8080
+    targetPort: 8080
+    name: http
+    protocol: TCP
+
+istioIngress:
+  enabled: true
+  gateway: my-gateway
+  port: 8080
+  domain: example.com
+
+persistence:
+  enabled: false
+  localStorage:
+    volumes: []
+
+configData: []
+env: []
+secretEnv: []

@@ -35,7 +35,7 @@ spec:
 
           # ALL PROBES DEFINED HERE
           {{- if .Values.readinessProbe }}
-          readiesProbe:
+          readinessProbe:
           {{- toYaml .Values.readinessProbe | nindent 12 }}
           {{- end }}
 
@@ -75,26 +75,40 @@ spec:
           # END of env values
           # ADDING VOLUMES
           volumeMounts:
-            # add volues uaing pvcs
             {{- range .Values.persistence.localStorage.volumes }}
             - name: {{ .name }}
               mountPath: {{ .mountPath }}
             {{- end }}
-            # add volumes using config
-            {{- range .Values.persistence.localStorage.volumes }}
+            {{- range .Values.configData }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+            {{- end }}
+            {{- range .Values.existingVolumes.pvcs }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+            {{- end }}
+            {{- range .Values.existingVolumes.configMaps }}
             - name: {{ .name }}
               mountPath: {{ .mountPath }}
             {{- end }}
 
       volumes:
-        # add volues using pvcs and pvs
         {{- range .Values.persistence.localStorage.volumes }}
         - name: {{ .name }}
           persistentVolumeClaim:
             claimName: {{ .name }}-pvc
         {{- end }}
-        # adding volumes using config
         {{- range .Values.configData }}
+        - name: {{ .name }}
+          configMap:
+            name: {{ .name }}
+        {{- end }}
+        {{- range .Values.existingVolumes.pvcs }}
+        - name: {{ .name }}
+          persistentVolumeClaim:
+            claimName: {{ .name }}
+        {{- end }}
+        {{- range .Values.existingVolumes.configMaps }}
         - name: {{ .name }}
           configMap:
             name: {{ .name }}

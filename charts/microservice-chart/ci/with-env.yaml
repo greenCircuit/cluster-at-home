@@ -1,0 +1,37 @@
+name: test-app
+
+image:
+  repository: nginx
+  tag: latest
+  pullPolicy: IfNotPresent
+
+imagePullSecrets:
+  - my-registry-secret
+
+ports:
+  - port: 8080
+    targetPort: 8080
+    name: http
+    protocol: TCP
+
+env:
+  - name: ENV
+    value: staging
+  - name: LOG_LEVEL
+    value: info
+
+secretEnv:
+  - name: app-secret
+    values:
+      - key: db-password
+        value: DB_PASSWORD
+
+istioIngress:
+  enabled: false
+
+persistence:
+  enabled: false
+  localStorage:
+    volumes: []
+
+configData: []

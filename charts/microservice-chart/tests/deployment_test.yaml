@@ -1,0 +1,124 @@
+suite: deployment
+templates:
+  - deployment.yaml
+tests:
+  - it: should render correct image
+    values:
+      - ../ci/base.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: nginx:latest
+
+  - it: should not render probes when not set
+    values:
+      - ../ci/base.yaml
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].readinessProbe
+      - notExists:
+          path: spec.template.spec.containers[0].livenessProbe
+      - notExists:
+          path: spec.template.spec.containers[0].startupProbe
+
+  - it: should render all three probes
+    values:
+      - ../ci/with-probes.yaml
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].readinessProbe
+      - exists:
+          path: spec.template.spec.containers[0].livenessProbe
+      - exists:
+          path: spec.template.spec.containers[0].startupProbe
+
+  - it: should render env vars
+    values:
+      - ../ci/with-env.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENV
+            value: staging
+
+  - it: should render env from secret
+    values:
+      - ../ci/with-env.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: app-secret
+                key: db-password
+
+  - it: should render imagePullSecrets
+    values:
+      - ../ci/with-env.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.imagePullSecrets
+          content:
+            name: my-registry-secret
+
+  - it: should mount persistence volumes
+    values:
+      - ../ci/with-persistence.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: data
+            mountPath: /data
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: data
+            persistentVolumeClaim:
+              claimName: data-pvc
+
+  - it: should mount configmap volumes
+    values:
+      - ../ci/with-configmaps.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: app-config
+            mountPath: /etc/app
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: app-config
+            configMap:
+              name: app-config
+
+  - it: should mount existing PVC and ConfigMap
+    values:
+      - ../ci/with-existing-volumes.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: shared-data
+            mountPath: /data
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: shared-config
+            mountPath: /etc/config
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: shared-data
+            persistentVolumeClaim:
+              claimName: shared-data
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: shared-config
+            configMap:
+              name: shared-config
