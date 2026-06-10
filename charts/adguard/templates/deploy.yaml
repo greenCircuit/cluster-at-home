@@ -61,7 +61,7 @@ spec:
           imagePullPolicy: {{ .Values.sidecarImage.pullPolicy }} 
           resources: 
             limits:
-              memory: "16Mi"
+              memory: "64Mi"
               cpu: "32m"
           volumeMounts:
             # logs file
