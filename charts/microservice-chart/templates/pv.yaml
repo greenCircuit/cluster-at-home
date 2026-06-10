@@ -12,7 +12,7 @@ spec:
     storage: {{ .size }}
   accessModes:
     - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Retain
+  persistentVolumeReclaimPolicy: Delete
   storageClassName: local-storage
   local:
     path: {{ .hostPath }}
