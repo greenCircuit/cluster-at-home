@@ -29,6 +29,14 @@ resources:
     cpu: "16m"
     memory: 128Mi
 
+# per-server defaults; each ports entry may override maxBodySize/readTimeout/sendTimeout
+proxy:
+  maxBodySize: 512m
+  bodyTimeout: 300s
+  readTimeout: 300s
+  sendTimeout: 300s
+  errorLogLevel: warn
+
 ports: []
   # - name: grafana
   #   target: http://grafana.monitoring.svc.cluster.local:3000
