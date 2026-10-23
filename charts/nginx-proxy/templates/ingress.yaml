@@ -18,7 +18,7 @@ spec:
     - route:
         - destination:
             # Points to your single Nginx Service
-            host: "nginx-auth.{{ $.Release.Namespace }}.svc.cluster.local"
+            host: "{{ $.Values.name }}.{{ $.Release.Namespace }}.svc.cluster.local"
             port:
               number: {{ .port }}
 {{- end }}
