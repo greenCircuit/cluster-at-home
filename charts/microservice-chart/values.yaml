@@ -66,6 +66,9 @@ existingVolumes:
   configMaps: []
   # - name: my-existing-cm
   #   mountPath: /etc/config
+  emptyDirs: []
+  # - name: run
+  #   mountPath: /run
 
 strategy: RollingUpdate  # RollingUpdate or Recreate
 

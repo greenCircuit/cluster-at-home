@@ -29,11 +29,23 @@ resources:
     cpu: "16m"
     memory: 128Mi
 
+# per-server defaults; each ports entry may override maxBodySize/readTimeout/sendTimeout
+proxy:
+  maxBodySize: 512m
+  bodyTimeout: 300s
+  readTimeout: 300s
+  sendTimeout: 300s
+  errorLogLevel: warn
+  # seconds the cookie gate session lasts (ports with cookieGate: true)
+  cookieGateMaxAge: 28800
+
 ports: []
   # - name: grafana
   #   target: http://grafana.monitoring.svc.cluster.local:3000
   #   port: 3000        # pod port spec and svc port spec
   #   protocol: TCP 
+  #   streaming: true   # disable response buffering (SSE)
+  #   cookieGate: true  # basic auth once, then session cookie; for apps sending their own Authorization: Bearer
      
 
 # create istio virtual service or not

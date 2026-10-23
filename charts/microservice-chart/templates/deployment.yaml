@@ -97,6 +97,10 @@ spec:
             - name: {{ .name }}
               mountPath: {{ .mountPath }}
             {{- end }}
+            {{- range .Values.existingVolumes.emptyDirs }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+            {{- end }}
 
       volumes:
         {{- range .Values.persistence.localStorage.volumes }}
@@ -118,5 +122,9 @@ spec:
         - name: {{ .name }}
           configMap:
             name: {{ .name }}
+        {{- end }}
+        {{- range .Values.existingVolumes.emptyDirs }}
+        - name: {{ .name }}
+          emptyDir: {}
         {{- end }}
 

@@ -30,6 +30,11 @@ spec:
             - |
               echo "Generating auth file for user: $AUTH_USER"
               htpasswd -c -b /auth/.htpasswd "$AUTH_USER" "$AUTH_PASS"
+              {{- if include "nginx-proxy.cookieGate" . }}
+              # cookie gate token, new per pod start so restart logs everyone out
+              token=$(tr -dc 'a-f0-9' < /dev/urandom | head -c 48)
+              printf 'map $host $proxy_gate_token { default "%s"; }\nmap $cookie_proxy_gate $proxy_gate_auth { "%s" off; default "Restricted Access"; }\n' "$token" "$token" > /auth/gate-map.conf
+              {{- end }}
           # env vars from sercers
           env:
           {{- range .Values.secretEnv }}
