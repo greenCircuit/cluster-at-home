@@ -17,7 +17,7 @@ spec:
       initContainers:
         - name: auth-generator
           image: {{ .Values.initContainer.repository}}:{{ .Values.initContainer.tag}}
-          pullPolicy: {{ .Values.initContainer.pullPolicy }}
+          imagePullPolicy: {{ .Values.initContainer.pullPolicy }}
           securityContext:
             allowPrivilegeEscalation: false
             runAsNonRoot: true
