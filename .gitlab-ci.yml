@@ -25,6 +25,7 @@ check-microservice-chart:
           - ci/with-probes.yaml
           - ci/with-resources.yaml
           - ci/with-existing-volumes.yaml
+          - ci/with-serviceaccount.yaml
   variables:
     CHECK_PATH: charts/microservice-chart
 
