@@ -122,3 +122,26 @@ tests:
             name: shared-config
             configMap:
               name: shared-config
+
+  - it: should not render command or args by default
+    values:
+      - ../ci/base.yaml
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].command
+      - notExists:
+          path: spec.template.spec.containers[0].args
+
+  - it: should render command and args
+    values:
+      - ../ci/base.yaml
+    set:
+      command: ["python3", "/app/main.py"]
+      args: ["--port", "8080"]
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value: ["python3", "/app/main.py"]
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value: ["--port", "8080"]

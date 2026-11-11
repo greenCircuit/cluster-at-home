@@ -78,3 +78,7 @@ serviceAccount:
   # create: true  → SA name, defaults to .name
   # create: false → existing SA to use, empty = namespace default
   name: ""
+
+# override image entrypoint / cmd; empty = image defaults
+command: []
+args: []
